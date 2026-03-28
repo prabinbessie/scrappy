@@ -37,7 +37,7 @@ python -m scraper.cli ipo
 python -m scraper.cli all
 ```
 
-## Developer workflow
+## Dev workflow
 
 Install and enable git hooks for pre-commit checks:
 
@@ -53,9 +53,3 @@ ruff check .
 black --check .
 pytest -q tests
 ```
-
-## Automation 
-
-
-
-##
