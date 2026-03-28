@@ -1,0 +1,44 @@
+{
+  "meta": {
+    "generated_at_utc": "2026-03-28T16:50:21+00:00",
+    "sources": {
+      "merolagani_upcoming": 1,
+      "merolagani_results": 0,
+      "nepse_disclosures": 0
+    },
+    "upcoming_count": 0,
+    "open_count": 0,
+    "closed_count": 1,
+    "result_count": 0,
+    "unknown_count": 0
+  },
+  "upcoming": [],
+  "open": [],
+  "closed": [
+    {
+      "record_type": "issue",
+      "nature": "issue",
+      "issue_status": "closed",
+      "issue_type": "ipo",
+      "company_name": "Kalinchowk Hydropower Limited",
+      "title": "Kalinchowk Hydropower Limited is going to issue its 6,84,750.00 units of IPO shares to the general public starting from 22nd - 25th Chaitra, 2082",
+      "details": "Kalinchowk Hydropower Limited is going to issue its 6,84,750.00 units of IPO shares to the general public starting from 22nd - 25th Chaitra, 2082",
+      "reserved_for": [
+        "general_public"
+      ],
+      "issue_open_date": null,
+      "issue_close_date": "2026-03-06",
+      "min_quantity": null,
+      "max_quantity": null,
+      "total_quantity": 684750.0,
+      "price_per_unit": null,
+      "announcement_date": "Mar 26, 2026",
+      "source": "merolagani_upcoming",
+      "url": "https://merolagani.com/AnnouncementDetail.aspx?id=64893",
+      "scraped_at_utc": "2026-03-28T16:50:21+00:00",
+      "raw_text": "Kalinchowk Hydropower Limited is going to issue its 6,84,750.00 units of IPO shares to the general public starting from 22nd - 25th Chaitra, 2082 Kalinchowk Hydropower Limited is going to issue its 6,84,750.00 units of IPO shares to the general public starting from 22nd - 25th Chaitra, 2082"
+    }
+  ],
+  "results": [],
+  "unknown": []
+}
