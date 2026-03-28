@@ -1,0 +1,39 @@
+name: Scrape NEPSE Market CSV
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/30 4-10 * * 0-5"
+
+permissions:
+  contents: write
+
+jobs:
+  scrape-market:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+
+      - name: Run market scraper
+        run: python -m scraper.cli market
+
+      - name: Commit and push data
+        run: |
+          git config user.name "Prabin Bhandari"
+          git config user.email "prabinbessie@users.noreply.github.com"
+          git pull --rebase --autostash
+          git add data/nepse/*.csv
+          git commit -m "Update market data" || echo "Nothing new to commit"
+          git push

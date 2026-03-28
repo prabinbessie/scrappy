@@ -1,0 +1,39 @@
+name: Scrape IPO Feed JSON
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  scrape-ipo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+
+      - name: Run IPO scraper
+        run: python -m scraper.cli ipo
+
+      - name: Commit and push data
+        run: |
+          git config user.name "Prabin Bhandari"
+          git config user.email "prabinbessie@users.noreply.github.com"
+          git pull --rebase --autostash
+          git add data/ipo/ipo_feed.json
+          git commit -m "Update IPO data" || echo "Nothing new to commit"
+          git push
