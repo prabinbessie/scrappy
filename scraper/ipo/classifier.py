@@ -26,6 +26,29 @@ RESERVED_KEYWORDS: dict[str, tuple[str, ...]] = {
 
 RESULT_KEYWORDS: tuple[str, ...] = ("allotment", "allot", "result published", "allotted")
 
+NEPALI_MONTH_TOKENS: tuple[str, ...] = (
+    "baishakh",
+    "jestha",
+    "ashadh",
+    "shrawan",
+    "bhadra",
+    "ashwin",
+    "kartik",
+    "mangsir",
+    "poush",
+    "magh",
+    "falgun",
+    "chaitra",
+)
+
+FUTURE_ISSUE_HINTS: tuple[str, ...] = (
+    "going to issue",
+    "will issue",
+    "starting from",
+)
+
+OPEN_FROM_PATTERN = r"open(?:s)?\s+from"
+
 
 def normalize_text(value: str) -> str:
     return " ".join((value or "").split()).strip()
@@ -64,6 +87,9 @@ def detect_reserved_for(text: str) -> list[str]:
 def _safe_parse_date(value: str) -> str | None:
     if not value:
         return None
+    lowered = value.lower()
+    if any(month in lowered for month in NEPALI_MONTH_TOKENS):
+        return None
     try:
         parsed = date_parser.parse(value, fuzzy=True, dayfirst=False)
         return parsed.date().isoformat()
@@ -82,9 +108,28 @@ def _to_date(value: str | None) -> date | None:
 
 def extract_issue_dates(text: str) -> tuple[str | None, str | None]:
     cleaned = normalize_text(text)
+    open_prefix = rf"(?:from|starting\s+from|{OPEN_FROM_PATTERN})"
+
+    same_month_range = re.search(
+        rf"{open_prefix}\s+"
+        r"(\d{1,2}(?:st|nd|rd|th)?)\s*[-–]\s*"
+        r"(\d{1,2}(?:st|nd|rd|th)?)\s+([A-Za-z]+),?\s*(\d{4})",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if same_month_range:
+        start_expr = (
+            f"{same_month_range.group(1)} {same_month_range.group(3)} {same_month_range.group(4)}"
+        )
+        end_expr = (
+            f"{same_month_range.group(2)} {same_month_range.group(3)} {same_month_range.group(4)}"
+        )
+        return _safe_parse_date(start_expr), _safe_parse_date(end_expr)
+
+    date_expr = r"(?:\d{4}[-/]\d{1,2}[-/]\d{1,2}" r"|\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]+,?\s*\d{4})"
 
     range_match = re.search(
-        r"(?:from|starting\s+from|open\s+from)\s+(.+?)\s+(?:to|till|until)\s+(.+?)(?:$|,|\.)",
+        rf"{open_prefix}\s+({date_expr})\s+(?:to|till|until)\s+({date_expr})",
         cleaned,
         flags=re.IGNORECASE,
     )
@@ -94,7 +139,7 @@ def extract_issue_dates(text: str) -> tuple[str | None, str | None]:
         return start_date, end_date
 
     starts_match = re.search(
-        r"(?:from|starting\s+from|open\s+from)\s+(.+?)(?:$|,|\.)",
+        rf"{open_prefix}\s+({date_expr})",
         cleaned,
         flags=re.IGNORECASE,
     )
@@ -104,13 +149,19 @@ def extract_issue_dates(text: str) -> tuple[str | None, str | None]:
     return None, None
 
 
-def derive_issue_status(open_date: str | None, close_date: str | None, nature: str) -> str:
+def derive_issue_status(
+    open_date: str | None,
+    close_date: str | None,
+    nature: str,
+    full_text: str = "",
+) -> str:
     if nature == "result":
         return "result"
 
     today = datetime.now(timezone.utc).date()
     start = _to_date(open_date)
     end = _to_date(close_date)
+    lowered_text = normalize_text(full_text).lower()
 
     if start and start > today:
         return "upcoming"
@@ -118,7 +169,20 @@ def derive_issue_status(open_date: str | None, close_date: str | None, nature: s
         return "open"
     if start and not end and start <= today:
         return "open"
+
+    if (
+        not start
+        and not end
+        and (
+            any(marker in lowered_text for marker in FUTURE_ISSUE_HINTS)
+            or re.search(rf"\b{OPEN_FROM_PATTERN}\b", lowered_text)
+        )
+    ):
+        return "upcoming"
+
     if end and end < today:
+        if any(month in lowered_text for month in NEPALI_MONTH_TOKENS):
+            return "upcoming"
         return "closed"
     return "unknown"
 
@@ -184,7 +248,7 @@ def classify_ipo_entry(entry: dict[str, Any], record_type: str) -> dict[str, Any
     nature = detect_record_nature(full_text)
     reserved_for = detect_reserved_for(full_text)
     open_date, close_date = extract_issue_dates(full_text)
-    issue_status = derive_issue_status(open_date, close_date, nature)
+    issue_status = derive_issue_status(open_date, close_date, nature, full_text)
     min_quantity, max_quantity, total_quantity, price_per_unit = extract_quantities_and_price(
         full_text
     )

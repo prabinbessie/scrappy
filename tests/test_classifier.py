@@ -42,3 +42,19 @@ def test_classify_ipo_entry() -> None:
 
 def test_derive_issue_status_result() -> None:
     assert derive_issue_status("2026-03-20", "2026-03-24", "result") == "result"
+
+
+def test_classify_ipo_entry_nepali_month_range_defaults_to_upcoming() -> None:
+    entry = {
+        "title": "Kalinchowk Hydropower Limited is going to issue its 6,84,750.00 units of IPO shares to the general public starting from 22nd - 25th Chaitra, 2082",
+        "details": "Kalinchowk Hydropower Limited is going to issue its 6,84,750.00 units of IPO shares to the general public starting from 22nd - 25th Chaitra, 2082",
+        "announcement_date": "Mar 26, 2026",
+        "url": "https://merolagani.com/AnnouncementDetail.aspx?id=64893",
+        "source": "merolagani_upcoming",
+    }
+
+    classified = classify_ipo_entry(entry, "issue")
+
+    assert classified["issue_status"] == "upcoming"
+    assert classified["issue_open_date"] is None
+    assert classified["issue_close_date"] is None
