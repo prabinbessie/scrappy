@@ -84,7 +84,7 @@ jobs:
             });
 
             if (openPrs.data.length === 0) {
-              await github.rest.pulls.create({
+              const { data: pull } = await github.rest.pulls.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: `Market data updates for ${process.env.NPT_DATE} (NPT)`,
@@ -97,5 +97,12 @@ jobs:
                   '- Frequency: every 30 minutes during market window',
                   '- Files: `data/nepse/market_summary_timeseries.csv`, `data/nepse/today_price_timeseries.csv`',
                 ].join('\n'),
+              });
+
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pull.number,
+                labels: ['auto-scraped']
               });
             }
