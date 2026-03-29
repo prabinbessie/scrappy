@@ -3,7 +3,8 @@ name: Scrape NEPSE Market CSV
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/30 4-10 * * 0-5"
+    - cron: "15,45 5-8 * * 0-4"
+    - cron: "15 9 * * 0-4"
 
 permissions:
   contents: write
@@ -35,5 +36,5 @@ jobs:
           git config user.email "prabinbessie@users.noreply.github.com"
           git pull --rebase --autostash
           git add data/nepse/*.csv
-          git commit -m "Update market data" || echo "Nothing new to commit"
+          git commit -m "Update market data ($(TZ=Asia/Kathmandu date +'%Y-%m-%d %H:%M NPT'))" || echo "Nothing new to commit"
           git push
