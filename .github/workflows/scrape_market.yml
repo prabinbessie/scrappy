@@ -14,10 +14,34 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+      HAS_CHANGES: "false"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Prepare daily PR metadata (NPT)
+        run: |
+          echo "NPT_DATE=$(TZ=Asia/Kathmandu date +'%Y-%m-%d')" >> "$GITHUB_ENV"
+          echo "NPT_TIME=$(TZ=Asia/Kathmandu date +'%Y-%m-%d %H:%M NPT')" >> "$GITHUB_ENV"
+          echo "BRANCH_NAME=auto/market-data-$(TZ=Asia/Kathmandu date +'%Y-%m-%d')" >> "$GITHUB_ENV"
+
+      - name: Configure git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Create or switch to daily branch
+        run: |
+          if git ls-remote --exit-code --heads origin "${BRANCH_NAME}"; then
+            git fetch origin "${BRANCH_NAME}"
+            git checkout -B "${BRANCH_NAME}" "origin/${BRANCH_NAME}"
+          else
+            git fetch origin dev
+            git checkout -B "${BRANCH_NAME}" "origin/dev"
+          fi
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -32,28 +56,47 @@ jobs:
       - name: Run market scraper
         run: python -m scraper.cli market
 
-      - name: Prepare daily PR metadata (NPT)
+      - name: Commit and push market data
         run: |
-          echo "NPT_DATE=$(TZ=Asia/Kathmandu date +'%Y-%m-%d')" >> "$GITHUB_ENV"
-          echo "NPT_TIME=$(TZ=Asia/Kathmandu date +'%Y-%m-%d %H:%M NPT')" >> "$GITHUB_ENV"
-          echo "BRANCH_NAME=auto/market-data-$(TZ=Asia/Kathmandu date +'%Y-%m-%d')" >> "$GITHUB_ENV"
+          git add data/nepse/market_summary_timeseries.csv data/nepse/today_price_timeseries.csv
+          if git diff --cached --quiet; then
+            echo "No market data changes to commit"
+            echo "HAS_CHANGES=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
 
-      - name: Create or update daily market data PR
-        uses: peter-evans/create-pull-request@v7
+          git commit -m "Update market data (${NPT_TIME})"
+          git push origin "${BRANCH_NAME}"
+          echo "HAS_CHANGES=true" >> "$GITHUB_ENV"
+
+      - name: Create daily PR if missing
+        if: env.HAS_CHANGES == 'true'
+        uses: actions/github-script@v7
         with:
-          base: dev
-          branch: ${{ env.BRANCH_NAME }}
-          delete-branch: true
-          title: "Market data updates for ${{ env.NPT_DATE }} (NPT)"
-          commit-message: "Update market data (${{ env.NPT_TIME }})"
-          body: |
-            Automated market data updates for **${{ env.NPT_DATE }} (NPT)**.
+          script: |
+            const head = `${context.repo.owner}:${process.env.BRANCH_NAME}`;
+            const base = 'dev';
+            const openPrs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head,
+              base,
+            });
 
-            - Source: scheduled workflow
-            - Frequency: every 30 minutes during market window
-            - Files: `data/nepse/market_summary_timeseries.csv`, `data/nepse/today_price_timeseries.csv`
-
-            This PR is updated throughout the day and can be merged once ready.
-          add-paths: |
-            data/nepse/market_summary_timeseries.csv
-            data/nepse/today_price_timeseries.csv
+            if (openPrs.data.length === 0) {
+              await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `Market data updates for ${process.env.NPT_DATE} (NPT)`,
+                head: process.env.BRANCH_NAME,
+                base,
+                body: [
+                  `Automated market data updates for **${process.env.NPT_DATE} (NPT)**.`,
+                  '',
+                  '- Source: external cron + workflow_dispatch',
+                  '- Frequency: every 30 minutes during market window',
+                  '- Files: `data/nepse/market_summary_timeseries.csv`, `data/nepse/today_price_timeseries.csv`',
+                ].join('\n'),
+              });
+            }
