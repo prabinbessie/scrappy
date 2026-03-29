@@ -1,30 +1,37 @@
+<p align="center">
+	<img src="assets/logo.png" alt="Scrappy logo" width="180" />
+</p>
+
 # Scrappy
 
-Scrappy is a Py project that collects NEPSE  data in a very Ml feeding format which is  made for my another project:
+Scrappy is a Python project that collects NEPSE market and IPO data in a clean, ML-friendly format for downstream analysis and automation.
 
 ## What it collects
 
 - Market snapshots to CSV:
 	- `data/nepse/market_summary_timeseries.csv`
 	- `data/nepse/today_price_timeseries.csv`
-- Ipo feed to the JSON:
+- IPO feed to JSON:
 	- `data/ipo/ipo_feed.json`
 
-## sources
+## Sources
 
-- NEPSE(primary) [https://www.nepalstock.com/]
-- Merolagani IPO pages (upcoming + result) [https://merolagani.com/] (primary for IPO feed)
-- ShareSansar live table (fallback only for sumamry) [https://www.sharesansar.com/] (fallback)
+- NEPSE (primary): https://www.nepalstock.com/
+- Merolagani IPO pages (IPO): https://merolagani.com/
+- ShareSansar live table (fallback): https://www.sharesansar.com/
 
+## Setup
 
-
-## setup
+Create and activate a virtual environment:
 
 ```bash
-python -m pip install -e .[dev]
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
 ```
 
-Run jobs:
+## Run jobs
 
 ```bash
 # market only
@@ -33,7 +40,7 @@ python -m scraper.cli market
 # ipo only
 python -m scraper.cli ipo
 
-# for botth
+# both
 python -m scraper.cli all
 ```
 
