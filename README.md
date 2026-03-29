@@ -46,6 +46,10 @@ python -m scraper.cli all
 
 ## Dev workflow
 
+```bash
+source .venv/bin/activate && python -m pip install -e ".[dev]" && pre-commit install && pre-commit run --all-files
+```
+
 Install and enable git hooks for pre-commit checks:
 
 ```bash
@@ -53,7 +57,9 @@ pre-commit install
 pre-commit run --all-files
 ```
 
-Manualy quality checks:
+After `pre-commit install`, every commit will automatically run lint, formatting, and tests (`pytest -q tests`).
+
+Manual quality checks:
 
 ```bash
 ruff check .

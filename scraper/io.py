@@ -12,7 +12,7 @@ def _ensure_parent(path: Path) -> None:
 
 
 def _normalize_cell(value: Any) -> Any:
-    if isinstance(value, (dict, list)):
+    if isinstance(value, dict | list):
         return json.dumps(value, ensure_ascii=False)
     return value
 
