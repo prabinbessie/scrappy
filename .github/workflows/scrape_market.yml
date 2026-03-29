@@ -13,7 +13,6 @@ jobs:
   scrape-market:
     runs-on: ubuntu-latest
     env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
       HAS_CHANGES: "false"
 
     steps:
