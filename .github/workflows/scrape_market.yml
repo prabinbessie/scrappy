@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   scrape-market:
@@ -30,11 +31,28 @@ jobs:
       - name: Run market scraper
         run: python -m scraper.cli market
 
-      - name: Commit and push data
+      - name: Prepare daily PR metadata (NPT)
         run: |
-          git config user.name "Prabin Bhandari"
-          git config user.email "prabinbessie@users.noreply.github.com"
-          git pull --rebase --autostash
-          git add data/nepse/*.csv
-          git commit -m "Update market data ($(TZ=Asia/Kathmandu date +'%Y-%m-%d %H:%M NPT'))" || echo "Nothing new to commit"
-          git push
+          echo "NPT_DATE=$(TZ=Asia/Kathmandu date +'%Y-%m-%d')" >> "$GITHUB_ENV"
+          echo "NPT_TIME=$(TZ=Asia/Kathmandu date +'%Y-%m-%d %H:%M NPT')" >> "$GITHUB_ENV"
+          echo "BRANCH_NAME=auto/market-data-$(TZ=Asia/Kathmandu date +'%Y-%m-%d')" >> "$GITHUB_ENV"
+
+      - name: Create or update daily market data PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          base: dev
+          branch: ${{ env.BRANCH_NAME }}
+          delete-branch: true
+          title: "Market data updates for ${{ env.NPT_DATE }} (NPT)"
+          commit-message: "Update market data (${{ env.NPT_TIME }})"
+          body: |
+            Automated market data updates for **${{ env.NPT_DATE }} (NPT)**.
+
+            - Source: scheduled workflow
+            - Frequency: every 30 minutes during market window
+            - Files: `data/nepse/market_summary_timeseries.csv`, `data/nepse/today_price_timeseries.csv`
+
+            This PR is updated throughout the day and can be merged once ready.
+          add-paths: |
+            data/nepse/market_summary_timeseries.csv
+            data/nepse/today_price_timeseries.csv
