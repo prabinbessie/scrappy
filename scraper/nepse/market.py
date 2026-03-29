@@ -252,8 +252,18 @@ def scrape_market_to_csv(client: NepseDataClient | None = None) -> dict[str, int
     summary_row = _build_market_summary_row(summary, status, scraped_at_utc)
     today_price_rows = _build_today_price_rows(today_price, status, scraped_at_utc, price_source)
 
-    summary_count = append_rows_to_csv(MARKET_SUMMARY_CSV, [summary_row], MARKET_SUMMARY_FIELDS)
-    price_count = append_rows_to_csv(TODAY_PRICE_CSV, today_price_rows, TODAY_PRICE_FIELDS)
+    summary_count = append_rows_to_csv(
+        MARKET_SUMMARY_CSV,
+        [summary_row],
+        MARKET_SUMMARY_FIELDS,
+        unique_key_fields=["scraped_at_utc"],
+    )
+    price_count = append_rows_to_csv(
+        TODAY_PRICE_CSV,
+        today_price_rows,
+        TODAY_PRICE_FIELDS,
+        unique_key_fields=["scraped_at_utc", "symbol"],
+    )
 
     return {
         "summary_rows_written": summary_count,

@@ -4,9 +4,6 @@ on:
   workflow_dispatch:
   repository_dispatch:
     types: [scrape-market-command]
-  schedule:
-    - cron: "15,45 5-8 * * 0-4"
-    - cron: "15 9 * * 0-4"
 
 permissions:
   contents: write
