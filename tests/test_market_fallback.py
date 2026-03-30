@@ -30,8 +30,10 @@ def test_parse_sharesansar_live_table() -> None:
 
 
 def test_market_fallback_source(monkeypatch, tmp_path) -> None:
-    monkeypatch.setattr(market, "MARKET_SUMMARY_CSV", tmp_path / "summary.csv")
-    monkeypatch.setattr(market, "TODAY_PRICE_CSV", tmp_path / "price.csv")
+    summary_path = tmp_path / "summary.csv"
+    price_path = tmp_path / "price.csv"
+    monkeypatch.setattr(market, "_is_within_trading_window", lambda _dt: True)
+    monkeypatch.setattr(market, "_daily_market_paths", lambda _dt: (summary_path, price_path))
     monkeypatch.setattr(
         market,
         "fetch_sharesansar_live_rows",
@@ -55,3 +57,5 @@ def test_market_fallback_source(monkeypatch, tmp_path) -> None:
     result = market.scrape_market_to_csv(client=DummyClient())
     assert result["price_source"] == "sharesansar_fallback"
     assert result["price_rows_written"] == 1
+    assert summary_path.exists()
+    assert price_path.exists()

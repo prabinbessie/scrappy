@@ -57,7 +57,7 @@ jobs:
 
       - name: Commit and push market data
         run: |
-          git add data/nepse/market_summary_timeseries.csv data/nepse/today_price_timeseries.csv
+          git add data/nepse/**/*.csv
           if git diff --cached --quiet; then
             echo "No market data changes to commit"
             echo "HAS_CHANGES=false" >> "$GITHUB_ENV"
@@ -95,7 +95,7 @@ jobs:
                   '',
                   '- Source: external cron + workflow_dispatch',
                   '- Frequency: every 30 minutes during market window',
-                  '- Files: `data/nepse/market_summary_timeseries.csv`, `data/nepse/today_price_timeseries.csv`',
+                  '- Files: `data/nepse/YYYY/MM/market_summary_YYYY-MM-DD.csv`, `data/nepse/YYYY/MM/today_price_YYYY-MM-DD.csv`',
                 ].join('\n'),
               });
 
