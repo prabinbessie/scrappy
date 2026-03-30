@@ -1,7 +1,11 @@
 from pathlib import Path
 
 from scraper.io import append_rows_to_csv
-from scraper.ipo.sources import parse_ipo_result_page, parse_upcoming_ipo_page
+from scraper.ipo.sources import (
+    parse_ipo_result_page,
+    parse_nepselink_ipo_opening_page,
+    parse_upcoming_ipo_page,
+)
 
 
 def test_parse_upcoming_ipo_page() -> None:
@@ -33,6 +37,36 @@ def test_parse_ipo_result_page() -> None:
     rows = parse_ipo_result_page(html, "https://merolagani.com")
     assert len(rows) == 1
     assert "allotment" in rows[0]["title"].lower()
+
+
+def test_parse_nepselink_ipo_opening_page() -> None:
+    html = """
+    <table>
+      <tr>
+        <th>IPO Type</th><th>Company Name</th><th>Units</th><th>Price per Unit</th>
+        <th>Minimum Apply</th><th>Open Date</th><th>Close Date</th><th>Status</th>
+      </tr>
+      <tr>
+        <td>IPO-General</td><td>Kalinchowk Hydropower Limited</td><td>684750</td><td>100</td>
+        <td>10</td><td>2082-12-22</td><td>2082-12-25</td><td>Coming Soon</td>
+      </tr>
+      <tr>
+        <td>IPO-GENERAL</td><td>Shikhar Power Development Limited</td><td>1842600</td><td>100</td>
+        <td>10</td><td>2082-11-17</td><td>2082-11-22</td><td>Closed</td>
+      </tr>
+    </table>
+    """
+
+    rows = parse_nepselink_ipo_opening_page(html, "https://nepselink.com/ipo-opening")
+
+    assert len(rows) == 2
+    assert rows[0]["source"] == "nepselink_ipo_opening"
+    assert rows[0]["company"] == "Kalinchowk Hydropower Limited"
+    assert rows[0]["issue_open_date"] == "2082-12-22"
+    assert rows[0]["issue_status"] == "upcoming"
+    assert rows[0]["announcement_date"] == "2082-12-22"
+    assert rows[1]["issue_status"] == "closed"
+    assert rows[1]["announcement_date"] == "2082-11-22"
 
 
 def test_append_rows_to_csv(tmp_path: Path) -> None:

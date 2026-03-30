@@ -10,7 +10,17 @@ from scraper.ipo.sources import fetch_all_ipo_source_records
 
 
 def _record_key(item: dict[str, Any]) -> str:
-    return f"{item.get('source','')}::{item.get('url','')}::{item.get('title','')}"
+    company = str(item.get("company_name") or "").strip().lower()
+    open_date = str(item.get("issue_open_date") or "").strip()
+    close_date = str(item.get("issue_close_date") or "").strip()
+    issue_type = str(item.get("issue_type") or "").strip().lower()
+    quantity = str(item.get("total_quantity") or "").strip()
+    price = str(item.get("price_per_unit") or "").strip()
+
+    if company and (open_date or close_date):
+        return f"biz::{company}::{issue_type}::{open_date}::{close_date}::{quantity}::{price}"
+
+    return f"raw::{item.get('source','')}::{item.get('url','')}::{item.get('title','')}"
 
 
 def _deduplicate(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -61,6 +71,7 @@ def scrape_ipo_to_json() -> dict[str, Any]:
     upcoming_raw = source_bundle.get("upcoming_sources", [])
     results_raw = source_bundle.get("result_sources", [])
     disclosures_raw = source_bundle.get("nepse_disclosure_sources", [])
+    nepselink_raw = source_bundle.get("nepselink_sources", [])
 
     combined_issues_raw = upcoming_raw + disclosures_raw
 
@@ -80,6 +91,7 @@ def scrape_ipo_to_json() -> dict[str, Any]:
 
     source_counts = {
         "merolagani_upcoming": _count_dict_items(upcoming_raw),
+        "nepselink_ipo_opening": _count_dict_items(nepselink_raw),
         "merolagani_results": _count_dict_items(results_raw),
         "nepse_disclosures": _count_dict_items(disclosures_raw),
     }
