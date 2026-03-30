@@ -9,8 +9,6 @@ DATA_DIR = Path(os.getenv("SCRAPPY_DATA_DIR", BASE_DIR / "data")).resolve()
 NEPSE_DATA_DIR = DATA_DIR / "nepse"
 IPO_DATA_DIR = DATA_DIR / "ipo"
 
-MARKET_SUMMARY_CSV = NEPSE_DATA_DIR / "market_summary_timeseries.csv"
-TODAY_PRICE_CSV = NEPSE_DATA_DIR / "today_price_timeseries.csv"
 IPO_FEED_JSON = IPO_DATA_DIR / "ipo_feed.json"
 
 IPO_UPCOMING_URL = os.getenv("IPO_UPCOMING_URL", "https://merolagani.com/Ipo.aspx?type=upcoming")

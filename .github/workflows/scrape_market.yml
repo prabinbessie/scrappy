@@ -57,7 +57,9 @@ jobs:
 
       - name: Commit and push market data
         run: |
-          git add data/nepse/**/*.csv
+          if [ -d data/nepse ]; then
+            git add -A data/nepse
+          fi
           if git diff --cached --quiet; then
             echo "No market data changes to commit"
             echo "HAS_CHANGES=false" >> "$GITHUB_ENV"
