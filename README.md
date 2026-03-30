@@ -9,8 +9,8 @@ Scrappy is a Python project that collects NEPSE market and IPO data in a clean, 
 ## What it collects
 
 - Market snapshots to CSV:
-	- `data/nepse/market_summary_timeseries.csv`
-	- `data/nepse/today_price_timeseries.csv`
+	- `data/nepse/YYYY/MM/market_summary_YYYY-MM-DD.csv`
+	- `data/nepse/YYYY/MM/today_price_YYYY-MM-DD.csv`
 - IPO feed to JSON:
 	- `data/ipo/ipo_feed.json`
 
@@ -19,6 +19,7 @@ Scrappy is a Python project that collects NEPSE market and IPO data in a clean, 
 - NEPSE (primary): https://www.nepalstock.com/
 - Merolagani IPO pages (IPO): https://merolagani.com/
 - ShareSansar live table (fallback): https://www.sharesansar.com/
+- NepseLink IPO opening table (IPO): https://nepselink.com/ipo-opening
 
 ## Setup
 

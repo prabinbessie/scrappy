@@ -1,18 +1,28 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, time, timezone
+from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
-from scraper.config import MARKET_SUMMARY_CSV, TODAY_PRICE_CSV
+from scraper.config import NEPSE_DATA_DIR
 from scraper.io import append_rows_to_csv
 from scraper.nepse.client import NepseDataClient
 from scraper.nepse.fallback import fetch_sharesansar_live_rows
 
+NPT_TZ = ZoneInfo("Asia/Kathmandu")
+MARKET_OPEN_TIME_NPT = time(11, 0)
+MARKET_CLOSE_TIME_NPT = time(15, 0)
+
 MARKET_SUMMARY_FIELDS = [
     "scraped_at_utc",
+    "scraped_at_npt",
+    "npt_date",
+    "npt_time",
     "scraped_epoch",
     "weekday",
     "hour_utc",
+    "hour_npt",
     "is_market_open",
     "as_of_date",
     "total_turnover",
@@ -29,9 +39,13 @@ MARKET_SUMMARY_FIELDS = [
 
 TODAY_PRICE_FIELDS = [
     "scraped_at_utc",
+    "scraped_at_npt",
+    "npt_date",
+    "npt_time",
     "scraped_epoch",
     "weekday",
     "hour_utc",
+    "hour_npt",
     "price_source",
     "is_market_open",
     "business_date",
@@ -100,13 +114,34 @@ def _safe_div(numerator: float | None, denominator: float | None) -> float | Non
     return numerator / denominator
 
 
-def _time_dimensions(scraped_at_utc: str) -> dict[str, int]:
+def _time_dimensions(scraped_at_utc: str, scraped_at_npt: str) -> dict[str, int | str]:
     scraped_dt = datetime.fromisoformat(scraped_at_utc)
+    scraped_npt = datetime.fromisoformat(scraped_at_npt)
     return {
+        "scraped_at_npt": scraped_at_npt,
+        "npt_date": scraped_npt.date().isoformat(),
+        "npt_time": scraped_npt.time().replace(microsecond=0).isoformat(),
         "scraped_epoch": int(scraped_dt.timestamp()),
         "weekday": scraped_dt.weekday(),
         "hour_utc": scraped_dt.hour,
+        "hour_npt": scraped_npt.hour,
     }
+
+
+def _is_within_trading_window(scraped_at_npt: datetime) -> bool:
+    current = scraped_at_npt.time().replace(tzinfo=None)
+    return MARKET_OPEN_TIME_NPT <= current < MARKET_CLOSE_TIME_NPT
+
+
+def _daily_market_paths(scraped_at_npt: datetime) -> tuple[Path, Path]:
+    year = f"{scraped_at_npt.year:04d}"
+    month = f"{scraped_at_npt.month:02d}"
+    day = scraped_at_npt.date().isoformat()
+    base = NEPSE_DATA_DIR / year / month
+    return (
+        base / f"market_summary_{day}.csv",
+        base / f"today_price_{day}.csv",
+    )
 
 
 def _resolved_price_values(item: dict[str, Any]) -> dict[str, Any]:
@@ -129,9 +164,9 @@ def _resolved_price_values(item: dict[str, Any]) -> dict[str, Any]:
 
 
 def _build_market_summary_row(
-    summary: dict[str, Any], status: dict[str, Any], scraped_at_utc: str
+    summary: dict[str, Any], status: dict[str, Any], scraped_at_utc: str, scraped_at_npt: str
 ) -> dict[str, Any]:
-    time_values = _time_dimensions(scraped_at_utc)
+    time_values = _time_dimensions(scraped_at_utc, scraped_at_npt)
     return {
         "scraped_at_utc": scraped_at_utc,
         **time_values,
@@ -153,10 +188,11 @@ def _build_today_price_rows(
     today_price: list[dict[str, Any]],
     status: dict[str, Any],
     scraped_at_utc: str,
+    scraped_at_npt: str,
     price_source: str,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
-    time_values = _time_dimensions(scraped_at_utc)
+    time_values = _time_dimensions(scraped_at_utc, scraped_at_npt)
     market_state = _pick(status, ["isOpen", "status"], "CLOSE")
 
     for item in today_price:
@@ -232,9 +268,21 @@ def _build_today_price_rows(
     return rows
 
 
-def scrape_market_to_csv(client: NepseDataClient | None = None) -> dict[str, int]:
+def scrape_market_to_csv(client: NepseDataClient | None = None) -> dict[str, Any]:
     data_client = client or NepseDataClient()
-    scraped_at_utc = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    now_utc = datetime.now(timezone.utc).replace(microsecond=0)
+    now_npt = now_utc.astimezone(NPT_TZ)
+
+    if not _is_within_trading_window(now_npt):
+        return {
+            "summary_rows_written": 0,
+            "price_rows_written": 0,
+            "price_source": "skipped_outside_trading_hours_npt",
+            "skipped": True,
+        }
+
+    scraped_at_utc = now_utc.isoformat()
+    scraped_at_npt = now_npt.isoformat()
 
     status = data_client.fetch_market_status()
     summary = data_client.fetch_market_summary()
@@ -249,17 +297,24 @@ def scrape_market_to_csv(client: NepseDataClient | None = None) -> dict[str, int
         today_price = fetch_sharesansar_live_rows()
         price_source = "sharesansar_fallback"
 
-    summary_row = _build_market_summary_row(summary, status, scraped_at_utc)
-    today_price_rows = _build_today_price_rows(today_price, status, scraped_at_utc, price_source)
+    summary_row = _build_market_summary_row(summary, status, scraped_at_utc, scraped_at_npt)
+    today_price_rows = _build_today_price_rows(
+        today_price,
+        status,
+        scraped_at_utc,
+        scraped_at_npt,
+        price_source,
+    )
+    summary_csv_path, price_csv_path = _daily_market_paths(now_npt)
 
     summary_count = append_rows_to_csv(
-        MARKET_SUMMARY_CSV,
+        summary_csv_path,
         [summary_row],
         MARKET_SUMMARY_FIELDS,
         unique_key_fields=["scraped_at_utc"],
     )
     price_count = append_rows_to_csv(
-        TODAY_PRICE_CSV,
+        price_csv_path,
         today_price_rows,
         TODAY_PRICE_FIELDS,
         unique_key_fields=["scraped_at_utc", "symbol"],

@@ -199,6 +199,22 @@ def _extract_number(pattern: str, text: str) -> float | None:
         return None
 
 
+def _coerce_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, int | float):
+        return float(value)
+    if isinstance(value, str):
+        cleaned = value.replace(",", "").strip()
+        if not cleaned:
+            return None
+        try:
+            return float(cleaned)
+        except ValueError:
+            return None
+    return None
+
+
 def extract_quantities_and_price(
     text: str,
 ) -> tuple[float | None, float | None, float | None, float | None]:
@@ -244,14 +260,32 @@ def classify_ipo_entry(entry: dict[str, Any], record_type: str) -> dict[str, Any
     details = normalize_text(str(entry.get("details", "")))
     full_text = normalize_text(f"{title} {details}")
 
-    issue_type = detect_issue_type(full_text)
+    issue_type = normalize_text(str(entry.get("issue_type", ""))).lower() or detect_issue_type(
+        full_text
+    )
     nature = detect_record_nature(full_text)
     reserved_for = detect_reserved_for(full_text)
     open_date, close_date = extract_issue_dates(full_text)
-    issue_status = derive_issue_status(open_date, close_date, nature, full_text)
+    open_date = str(entry.get("issue_open_date") or open_date or "") or None
+    close_date = str(entry.get("issue_close_date") or close_date or "") or None
+
+    explicit_status_raw = normalize_text(str(entry.get("issue_status", ""))).lower()
+    explicit_status_map = {
+        "coming soon": "upcoming",
+        "upcoming": "upcoming",
+        "open": "open",
+        "closed": "closed",
+        "result": "result",
+    }
+    issue_status = explicit_status_map.get(explicit_status_raw) or derive_issue_status(
+        open_date, close_date, nature, full_text
+    )
     min_quantity, max_quantity, total_quantity, price_per_unit = extract_quantities_and_price(
         full_text
     )
+    min_quantity = _coerce_float(entry.get("min_quantity")) or min_quantity
+    total_quantity = _coerce_float(entry.get("total_quantity")) or total_quantity
+    price_per_unit = _coerce_float(entry.get("price_per_unit")) or price_per_unit
     company_name = extract_company_name(full_text) or entry.get("company") or ""
 
     return {
