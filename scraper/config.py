@@ -20,5 +20,5 @@ NEPSELINK_IPO_OPENING_URL = os.getenv(
 IPO_RESULTS_URL = os.getenv("IPO_RESULTS_URL", "https://merolagani.com/Announcements.aspx")
 SHARESANSAR_LIVE_URL = os.getenv("SHARESANSAR_LIVE_URL", "https://www.sharesansar.com/live-trading")
 
-SCRAPPY_TIMEOUT_SECONDS = float(os.getenv("SCRAPPY_TIMEOUT_SECONDS", "30"))
+SCRAPPY_TIMEOUT_SECONDS = float(os.getenv("SCRAPPY_TIMEOUT_SECONDS", "15"))
 NEPSE_VERIFY_SSL = os.getenv("NEPSE_VERIFY_SSL", "false").strip().lower() in {"1", "true", "yes"}
