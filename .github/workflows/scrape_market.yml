@@ -36,11 +36,12 @@ jobs:
 
       - name: Create or switch to daily branch
         run: |
+          git fetch origin dev
           if git ls-remote --exit-code --heads origin "${BRANCH_NAME}"; then
             git fetch origin "${BRANCH_NAME}"
             git checkout -B "${BRANCH_NAME}" "origin/${BRANCH_NAME}"
+            git rebase "origin/dev"
           else
-            git fetch origin dev
             git checkout -B "${BRANCH_NAME}" "origin/dev"
           fi
 
@@ -72,7 +73,7 @@ jobs:
           fi
 
           git commit -m "Update market data (${NPT_TIME}) [run:${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}]"
-          git push origin "${BRANCH_NAME}"
+          git push --force-with-lease origin "${BRANCH_NAME}"
           echo "HAS_CHANGES=true" >> "$GITHUB_ENV"
 
       - name: Create daily PR if missing
