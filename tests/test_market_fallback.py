@@ -1,5 +1,6 @@
 from scraper.nepse import market
 from scraper.nepse.fallback import parse_sharesansar_live_table
+from datetime import datetime
 
 
 class DummyClient:
@@ -59,3 +60,32 @@ def test_market_fallback_source(monkeypatch, tmp_path) -> None:
     assert result["price_rows_written"] == 1
     assert summary_path.exists()
     assert price_path.exists()
+
+
+def test_daily_market_paths_rollover_month() -> None:
+    dt_end_month = datetime(2026, 3, 31, 14, 30, tzinfo=market.NPT_TZ)
+    summary_end, price_end = market._daily_market_paths(dt_end_month)
+
+    dt_next_month = datetime(2026, 4, 1, 11, 0, tzinfo=market.NPT_TZ)
+    summary_next, price_next = market._daily_market_paths(dt_next_month)
+
+    assert str(summary_end).endswith("/nepse/2026/03/market_summary_2026-03-31.csv")
+    assert str(price_end).endswith("/nepse/2026/03/today_price_2026-03-31.csv")
+    assert str(summary_next).endswith("/nepse/2026/04/market_summary_2026-04-01.csv")
+    assert str(price_next).endswith("/nepse/2026/04/today_price_2026-04-01.csv")
+
+
+def test_daily_market_paths_same_month_same_folder_and_stable() -> None:
+    dt1 = datetime(2026, 3, 5, 11, 0, tzinfo=market.NPT_TZ)
+    dt2 = datetime(2026, 3, 29, 14, 30, tzinfo=market.NPT_TZ)
+
+    summary_1, price_1 = market._daily_market_paths(dt1)
+    summary_2, price_2 = market._daily_market_paths(dt2)
+
+    assert summary_1.parent == summary_2.parent
+    assert price_1.parent == price_2.parent
+    assert str(summary_1.parent).endswith("/nepse/2026/03")
+
+    summary_1_repeat, price_1_repeat = market._daily_market_paths(dt1)
+    assert summary_1 == summary_1_repeat
+    assert price_1 == price_1_repeat

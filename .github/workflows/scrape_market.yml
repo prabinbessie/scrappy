@@ -24,7 +24,9 @@ jobs:
       - name: Prepare daily PR metadata (NPT)
         run: |
           echo "NPT_DATE=$(TZ=Asia/Kathmandu date +'%Y-%m-%d')" >> "$GITHUB_ENV"
-          echo "NPT_TIME=$(TZ=Asia/Kathmandu date +'%Y-%m-%d %H:%M NPT')" >> "$GITHUB_ENV"
+          echo "NPT_TIME=$(TZ=Asia/Kathmandu date +'%Y-%m-%d %H:%M:%S NPT')" >> "$GITHUB_ENV"
+          echo "NPT_YEAR=$(TZ=Asia/Kathmandu date +'%Y')" >> "$GITHUB_ENV"
+          echo "NPT_MONTH=$(TZ=Asia/Kathmandu date +'%m')" >> "$GITHUB_ENV"
           echo "BRANCH_NAME=auto/market-data-$(TZ=Asia/Kathmandu date +'%Y-%m-%d')" >> "$GITHUB_ENV"
 
       - name: Configure git user
@@ -52,6 +54,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e .
 
+      - name: Ensure NEPSE year/month directory exists
+        run: mkdir -p "data/nepse/${NPT_YEAR}/${NPT_MONTH}"
+
       - name: Run market scraper
         run: python -m scraper.cli market
 
@@ -66,7 +71,7 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Update market data (${NPT_TIME})"
+          git commit -m "Update market data (${NPT_TIME}) [run:${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}]"
           git push origin "${BRANCH_NAME}"
           echo "HAS_CHANGES=true" >> "$GITHUB_ENV"
 
