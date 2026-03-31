@@ -319,6 +319,9 @@ def _safe_fetch(
     except requests.RequestException as exc:
         logger.warning("IPO source fetch failed for %s: %s", source_name, exc)
         return []
+    except Exception as exc:
+        logger.warning("IPO source processing failed for %s: %s", source_name, exc)
+        return []
 
 
 def fetch_all_ipo_source_records(
@@ -333,7 +336,7 @@ def fetch_all_ipo_source_records(
     )
 
     return {
-        "upcoming_sources": upcoming_records + nepselink_records,
+        "upcoming_sources": nepselink_records + upcoming_records,
         "result_sources": result_records,
         "nepse_disclosure_sources": disclosure_records,
         "nepselink_sources": nepselink_records,

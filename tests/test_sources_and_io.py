@@ -2,6 +2,7 @@ from pathlib import Path
 
 from scraper.io import append_rows_to_csv
 from scraper.ipo.sources import (
+    fetch_all_ipo_source_records,
     parse_ipo_result_page,
     parse_nepselink_ipo_opening_page,
     parse_upcoming_ipo_page,
@@ -111,3 +112,22 @@ def test_append_rows_to_csv_dedupes_by_keys(tmp_path: Path) -> None:
     assert len(lines) == 4
     assert "2026-03-29T07:30:00+00:00,ACLBSL,1" in lines
     assert "2026-03-29T08:00:00+00:00,ACLBSL,3" in lines
+
+
+def test_fetch_all_ipo_source_records_tolerates_source_processing_error(monkeypatch) -> None:
+    from scraper.ipo import sources
+
+    def broken_upcoming() -> list[dict]:
+        raise ValueError("unexpected parser failure")
+
+    monkeypatch.setattr(sources, "fetch_upcoming_ipo_records", broken_upcoming)
+    monkeypatch.setattr(sources, "fetch_nepselink_ipo_opening_records", lambda: [])
+    monkeypatch.setattr(sources, "fetch_ipo_result_records", lambda: [])
+    monkeypatch.setattr(sources, "fetch_nepse_ipo_disclosure_records", lambda client=None: [])
+
+    bundle = fetch_all_ipo_source_records()
+
+    assert bundle["upcoming_sources"] == []
+    assert bundle["result_sources"] == []
+    assert bundle["nepse_disclosure_sources"] == []
+    assert bundle["nepselink_sources"] == []

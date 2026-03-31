@@ -13,12 +13,13 @@ def _record_key(item: dict[str, Any]) -> str:
     company = str(item.get("company_name") or "").strip().lower()
     open_date = str(item.get("issue_open_date") or "").strip()
     close_date = str(item.get("issue_close_date") or "").strip()
-    issue_type = str(item.get("issue_type") or "").strip().lower()
     quantity = str(item.get("total_quantity") or "").strip()
-    price = str(item.get("price_per_unit") or "").strip()
+
+    if company and quantity:
+        return f"biz-qty::{company}::{quantity}"
 
     if company and (open_date or close_date):
-        return f"biz::{company}::{issue_type}::{open_date}::{close_date}::{quantity}::{price}"
+        return f"biz-date::{company}::{open_date}::{close_date}"
 
     return f"raw::{item.get('source','')}::{item.get('url','')}::{item.get('title','')}"
 
