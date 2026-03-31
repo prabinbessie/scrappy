@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: "0 4 * * *"
 
+concurrency:
+  group: scrape-ipo
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -15,6 +19,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Sync branch before scrape
+        run: |
+          git fetch origin
+          git pull --ff-only origin "$(git branch --show-current)"
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -42,8 +53,4 @@ jobs:
           git add data/ipo/ipo_feed.json
           git commit -m "Update IPO data ($(TZ=Asia/Kathmandu date +'%Y-%m-%d %H:%M NPT'))"
 
-          # Fetch and merge safely, avoiding restrictive rebase locks
-          git fetch origin
-          git pull --no-rebase origin $(git branch --show-current) -X ours --no-edit || true
-
-          git push
+          git push origin "$(git branch --show-current)"

@@ -274,7 +274,9 @@ def classify_ipo_entry(entry: dict[str, Any], record_type: str) -> dict[str, Any
         "coming soon": "upcoming",
         "upcoming": "upcoming",
         "open": "open",
+        "live": "open",
         "closed": "closed",
+        "close": "closed",
         "result": "result",
     }
     issue_status = explicit_status_map.get(explicit_status_raw) or derive_issue_status(
