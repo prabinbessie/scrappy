@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: "0 4 * * *"
 
+concurrency:
+  group: scrape-ipo
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -15,6 +19,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Sync branch before scrape
+        run: |
+          git fetch origin
+          git pull --ff-only origin "$(git branch --show-current)"
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -31,9 +42,15 @@ jobs:
 
       - name: Commit and push data
         run: |
-          git config user.name "Prabin Bhandari"
-          git config user.email "prabinbessie@users.noreply.github.com"
-          git pull --rebase --autostash
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet data/ipo/ipo_feed.json; then
+            echo "Nothing new to commit"
+            exit 0
+          fi
+
           git add data/ipo/ipo_feed.json
-          git commit -m "Update IPO data ($(TZ=Asia/Kathmandu date +'%Y-%m-%d %H:%M NPT'))" || echo "Nothing new to commit"
-          git push
+          git commit -m "Update IPO data ($(TZ=Asia/Kathmandu date +'%Y-%m-%d %H:%M NPT'))"
+
+          git push origin "$(git branch --show-current)"

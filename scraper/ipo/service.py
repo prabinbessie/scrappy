@@ -9,11 +9,42 @@ from scraper.ipo.classifier import classify_ipo_entry
 from scraper.ipo.sources import fetch_all_ipo_source_records
 
 
+def _normalize_quantity_token(value: Any) -> str:
+    text = str(value or "").replace(",", "").strip()
+    if not text:
+        return ""
+
+    try:
+        numeric = float(text)
+    except ValueError:
+        return text
+
+    if numeric.is_integer():
+        return str(int(numeric))
+
+    normalized = f"{numeric:.8f}".rstrip("0").rstrip(".")
+    return normalized
+
+
+def _normalize_issue_status(value: Any) -> str:
+    lowered = str(value or "").strip().lower()
+    mapping = {
+        "coming soon": "upcoming",
+        "upcoming": "upcoming",
+        "open": "open",
+        "live": "open",
+        "closed": "closed",
+        "close": "closed",
+        "result": "result",
+    }
+    return mapping.get(lowered, "unknown")
+
+
 def _record_key(item: dict[str, Any]) -> str:
     company = str(item.get("company_name") or "").strip().lower()
     open_date = str(item.get("issue_open_date") or "").strip()
     close_date = str(item.get("issue_close_date") or "").strip()
-    quantity = str(item.get("total_quantity") or "").strip()
+    quantity = _normalize_quantity_token(item.get("total_quantity"))
 
     if company and quantity:
         return f"biz-qty::{company}::{quantity}"
@@ -48,7 +79,7 @@ def _group_by_status(records: list[dict[str, Any]]) -> dict[str, list[dict[str, 
     }
 
     for record in records:
-        status = str(record.get("issue_status", "unknown"))
+        status = _normalize_issue_status(record.get("issue_status", "unknown"))
         grouped.setdefault(status, []).append(record)
 
     return grouped
@@ -88,7 +119,7 @@ def scrape_ipo_to_json() -> dict[str, Any]:
     open_items = _sort_latest(grouped_issues.get("open", []))
     closed = _sort_latest(grouped_issues.get("closed", []))
     unknown = _sort_latest(grouped_issues.get("unknown", []))
-    results = _sort_latest(deduped_results + grouped_issues.get("result", []))
+    results = _sort_latest(_deduplicate(deduped_results + grouped_issues.get("result", [])))
 
     source_counts = {
         "merolagani_upcoming": _count_dict_items(upcoming_raw),

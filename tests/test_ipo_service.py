@@ -76,3 +76,101 @@ def test_scrape_ipo_to_json_groups(monkeypatch, tmp_path: Path) -> None:
     assert payload["meta"]["result_count"] == 1
     assert payload["meta"]["sources"]["nepselink_ipo_opening"] == 2
     assert (tmp_path / "ipo_feed.json").exists()
+
+
+def test_scrape_ipo_to_json_deduplicates_quantity_format(monkeypatch, tmp_path: Path) -> None:
+    fake_bundle = {
+        "upcoming_sources": [
+            {
+                "title": "Sample Hydro IPO opens from 2026-04-01 to 2026-04-05",
+                "details": "Price per unit Rs 100",
+                "announcement_date": "2026-03-31",
+                "url": "https://example.com/a",
+                "source": "source_a",
+                "company": "Sample Hydro",
+                "issue_type": "IPO",
+                "issue_open_date": "2026-04-01",
+                "issue_close_date": "2026-04-05",
+                "total_quantity": 684750,
+                "issue_status": "upcoming",
+            },
+            {
+                "title": "Sample Hydro IPO opens from 2026-04-01 to 2026-04-05",
+                "details": "Price per unit Rs 100",
+                "announcement_date": "2026-03-31",
+                "url": "https://example.com/b",
+                "source": "source_b",
+                "company": "Sample Hydro",
+                "issue_type": "IPO",
+                "issue_open_date": "2026-04-01",
+                "issue_close_date": "2026-04-05",
+                "total_quantity": 684750.0,
+                "issue_status": "upcoming",
+            },
+        ],
+        "result_sources": [],
+        "nepse_disclosure_sources": [],
+        "nepselink_sources": [],
+    }
+
+    monkeypatch.setattr(service, "fetch_all_ipo_source_records", lambda client=None: fake_bundle)
+    monkeypatch.setattr(service, "IPO_FEED_JSON", tmp_path / "ipo_feed.json")
+
+    payload = service.scrape_ipo_to_json()
+    assert payload["meta"]["upcoming_count"] == 1
+
+
+def test_scrape_ipo_to_json_normalizes_status_aliases(monkeypatch, tmp_path: Path) -> None:
+    fake_bundle = {
+        "upcoming_sources": [
+            {
+                "title": "Alpha IPO",
+                "details": "IPO",
+                "announcement_date": "2026-03-31",
+                "url": "https://example.com/alpha",
+                "source": "source_alpha",
+                "company": "Alpha",
+                "issue_type": "IPO",
+                "total_quantity": 1000,
+                "issue_status": "Coming Soon",
+            },
+            {
+                "title": "Beta IPO",
+                "details": "IPO",
+                "announcement_date": "2026-03-31",
+                "url": "https://example.com/beta",
+                "source": "source_beta",
+                "company": "Beta",
+                "issue_type": "IPO",
+                "issue_open_date": "2026-03-01",
+                "issue_close_date": "2026-03-10",
+                "total_quantity": 2000,
+                "issue_status": "LIVE",
+            },
+            {
+                "title": "Gamma IPO",
+                "details": "IPO",
+                "announcement_date": "2026-03-31",
+                "url": "https://example.com/gamma",
+                "source": "source_gamma",
+                "company": "Gamma",
+                "issue_type": "IPO",
+                "issue_open_date": "2026-03-01",
+                "issue_close_date": "2026-03-10",
+                "total_quantity": 3000,
+                "issue_status": "close",
+            },
+        ],
+        "result_sources": [],
+        "nepse_disclosure_sources": [],
+        "nepselink_sources": [],
+    }
+
+    monkeypatch.setattr(service, "fetch_all_ipo_source_records", lambda client=None: fake_bundle)
+    monkeypatch.setattr(service, "IPO_FEED_JSON", tmp_path / "ipo_feed.json")
+
+    payload = service.scrape_ipo_to_json()
+    assert payload["meta"]["upcoming_count"] == 1
+    assert payload["meta"]["open_count"] == 1
+    assert payload["meta"]["closed_count"] == 1
+    assert payload["meta"]["unknown_count"] == 0

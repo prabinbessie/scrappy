@@ -40,7 +40,7 @@ jobs:
           if git ls-remote --exit-code --heads origin "${BRANCH_NAME}" > /dev/null; then
             git fetch origin "${BRANCH_NAME}"
             git checkout "${BRANCH_NAME}"
-            git pull origin "${BRANCH_NAME}"
+            git pull --ff-only origin "${BRANCH_NAME}"
           else
             git checkout -b "${BRANCH_NAME}" "origin/dev"
           fi

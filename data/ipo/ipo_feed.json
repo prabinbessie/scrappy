@@ -1,15 +1,15 @@
 {
   "meta": {
-    "generated_at_utc": "2026-03-31T08:30:40+00:00",
+    "generated_at_utc": "2026-03-31T16:26:03+00:00",
     "sources": {
       "merolagani_upcoming": 12,
       "nepselink_ipo_opening": 10,
       "merolagani_results": 0,
       "nepse_disclosures": 0
     },
-    "upcoming_count": 3,
+    "upcoming_count": 2,
     "open_count": 0,
-    "closed_count": 9,
+    "closed_count": 8,
     "result_count": 0,
     "unknown_count": 0
   },
@@ -18,47 +18,22 @@
       "record_type": "issue",
       "nature": "issue",
       "issue_status": "upcoming",
-      "issue_type": "ipo",
+      "issue_type": "ipo-general",
       "company_name": "Appolo Hydropower Limited",
-      "title": "Appolo Hydropower Limited is going to issue its 7,80,200.00 units of IPO shares to the general public starting from 26th - 30th Chaitra, 2082",
-      "details": "Appolo Hydropower Limited is going to issue its 7,80,200.00 units of IPO shares to the general public starting from 26th - 30th Chaitra, 2082",
-      "reserved_for": [
-        "general_public"
-      ],
-      "issue_open_date": null,
-      "issue_close_date": null,
-      "min_quantity": null,
+      "title": "Appolo Hydropower Limited IPO-GENERAL",
+      "details": "IPO-GENERAL Appolo Hydropower Limited units 780200 price per unit 100 minimum apply 10 open 2082-12-26 close 2082-12-30 status Coming Soon",
+      "reserved_for": [],
+      "issue_open_date": "2082-12-26",
+      "issue_close_date": "2082-12-30",
+      "min_quantity": 10.0,
       "max_quantity": null,
       "total_quantity": 780200.0,
-      "price_per_unit": null,
-      "announcement_date": "Mar 31, 2026",
-      "source": "merolagani_upcoming",
-      "url": "https://merolagani.com/AnnouncementDetail.aspx?id=64950",
-      "scraped_at_utc": "2026-03-31T08:30:40+00:00",
-      "raw_text": "Appolo Hydropower Limited is going to issue its 7,80,200.00 units of IPO shares to the general public starting from 26th - 30th Chaitra, 2082 Appolo Hydropower Limited is going to issue its 7,80,200.00 units of IPO shares to the general public starting from 26th - 30th Chaitra, 2082"
-    },
-    {
-      "record_type": "issue",
-      "nature": "issue",
-      "issue_status": "upcoming",
-      "issue_type": "ipo",
-      "company_name": "Kalinchowk Hydropower Limited",
-      "title": "Kalinchowk Hydropower Limited is going to issue its 6,84,750.00 units of IPO shares to the general public starting from 22nd - 25th Chaitra, 2082",
-      "details": "Kalinchowk Hydropower Limited is going to issue its 6,84,750.00 units of IPO shares to the general public starting from 22nd - 25th Chaitra, 2082",
-      "reserved_for": [
-        "general_public"
-      ],
-      "issue_open_date": null,
-      "issue_close_date": null,
-      "min_quantity": null,
-      "max_quantity": null,
-      "total_quantity": 684750.0,
-      "price_per_unit": null,
-      "announcement_date": "Mar 26, 2026",
-      "source": "merolagani_upcoming",
-      "url": "https://merolagani.com/AnnouncementDetail.aspx?id=64893",
-      "scraped_at_utc": "2026-03-31T08:30:40+00:00",
-      "raw_text": "Kalinchowk Hydropower Limited is going to issue its 6,84,750.00 units of IPO shares to the general public starting from 22nd - 25th Chaitra, 2082 Kalinchowk Hydropower Limited is going to issue its 6,84,750.00 units of IPO shares to the general public starting from 22nd - 25th Chaitra, 2082"
+      "price_per_unit": 100.0,
+      "announcement_date": "2082-12-26",
+      "source": "nepselink_ipo_opening",
+      "url": "https://nepselink.com/ipo-opening",
+      "scraped_at_utc": "2026-03-31T16:26:03+00:00",
+      "raw_text": "Appolo Hydropower Limited IPO-GENERAL IPO-GENERAL Appolo Hydropower Limited units 780200 price per unit 100 minimum apply 10 open 2082-12-26 close 2082-12-30 status Coming Soon"
     },
     {
       "record_type": "issue",
@@ -78,7 +53,7 @@
       "announcement_date": "2082-12-22",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-03-31T08:30:40+00:00",
+      "scraped_at_utc": "2026-03-31T16:26:03+00:00",
       "raw_text": "Kalinchowk Hydropower Limited IPO-General IPO-General Kalinchowk Hydropower Limited units 684750 price per unit 100 minimum apply 10 open 2082-12-22 close 2082-12-25 status Coming Soon"
     }
   ],
@@ -102,7 +77,7 @@
       "announcement_date": "2082-11-22",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-03-31T08:30:40+00:00",
+      "scraped_at_utc": "2026-03-31T16:26:03+00:00",
       "raw_text": "Shikhar Power Development Limited IPO-GENERAL IPO-GENERAL Shikhar Power Development Limited units 1842600 price per unit 100 minimum apply 10 open 2082-11-17 close 2082-11-22 status Closed"
     },
     {
@@ -123,7 +98,7 @@
       "announcement_date": "2082-11-15",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-03-31T08:30:40+00:00",
+      "scraped_at_utc": "2026-03-31T16:26:03+00:00",
       "raw_text": "Palpa Cement Limited IPO-General IPO-General Palpa Cement Limited units 4500000 price per unit 100 minimum apply 10 open 2082-11-12 close 2082-11-15 status Closed"
     },
     {
@@ -144,7 +119,7 @@
       "announcement_date": "2082-11-10",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-03-31T08:30:40+00:00",
+      "scraped_at_utc": "2026-03-31T16:26:03+00:00",
       "raw_text": "Super Khudi Hydropower Limited IPO-General IPO-General Super Khudi Hydropower Limited units 1286500 price per unit 100 minimum apply 10 open 2082-11-05 close 2082-11-10 status Closed"
     },
     {
@@ -165,7 +140,7 @@
       "announcement_date": "2082-11-04",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-03-31T08:30:40+00:00",
+      "scraped_at_utc": "2026-03-31T16:26:03+00:00",
       "raw_text": "Ridge Line Energy Limited IPO-GENERAL IPO-GENERAL Ridge Line Energy Limited units 1180260 price per unit 100 minimum apply 10 open 2082-10-28 close 2082-11-04 status Closed"
     },
     {
@@ -186,7 +161,7 @@
       "announcement_date": "2082-10-26",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-03-31T08:30:40+00:00",
+      "scraped_at_utc": "2026-03-31T16:26:03+00:00",
       "raw_text": "Hotel Forest Inn Limited IPO-General IPO-General Hotel Forest Inn Limited units 3320000 price per unit 100 minimum apply 10 open 2082-10-22 close 2082-10-26 status Closed"
     },
     {
@@ -207,7 +182,7 @@
       "announcement_date": "2082-10-21",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-03-31T08:30:40+00:00",
+      "scraped_at_utc": "2026-03-31T16:26:03+00:00",
       "raw_text": "Suryakunda Hydro Electric Limited IPO-General IPO-General Suryakunda Hydro Electric Limited units 572431 price per unit 100 minimum apply 10 open 2082-10-18 close 2082-10-21 status Closed"
     },
     {
@@ -228,7 +203,7 @@
       "announcement_date": "2082-10-15",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-03-31T08:30:40+00:00",
+      "scraped_at_utc": "2026-03-31T16:26:03+00:00",
       "raw_text": "Bhujung Hydropower Limited IPO-General IPO-General Bhujung Hydropower Limited units 830000 price per unit 100 minimum apply 10 open 2082-10-12 close 2082-10-15 status Closed"
     },
     {
@@ -249,29 +224,8 @@
       "announcement_date": "2082-10-04",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-03-31T08:30:40+00:00",
+      "scraped_at_utc": "2026-03-31T16:26:03+00:00",
       "raw_text": "Solu Hydropower Limited IPO-General IPO-General Solu Hydropower Limited units 8200000 price per unit 100 minimum apply 10 open 2082-09-29 close 2082-10-04 status Closed"
-    },
-    {
-      "record_type": "issue",
-      "nature": "issue",
-      "issue_status": "closed",
-      "issue_type": "fpo",
-      "company_name": "Vijaya Laghubitta Bittiya Sanstha Limited",
-      "title": "Vijaya Laghubitta Bittiya Sanstha Limited FPO",
-      "details": "FPO Vijaya Laghubitta Bittiya Sanstha Limited units 466817 price per unit 100 minimum apply 10 open 2082-09-21 close 2082-09-24 status Closed",
-      "reserved_for": [],
-      "issue_open_date": "2082-09-21",
-      "issue_close_date": "2082-09-24",
-      "min_quantity": 10.0,
-      "max_quantity": null,
-      "total_quantity": 466817.0,
-      "price_per_unit": 100.0,
-      "announcement_date": "2082-09-24",
-      "source": "nepselink_ipo_opening",
-      "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-03-31T08:30:40+00:00",
-      "raw_text": "Vijaya Laghubitta Bittiya Sanstha Limited FPO FPO Vijaya Laghubitta Bittiya Sanstha Limited units 466817 price per unit 100 minimum apply 10 open 2082-09-21 close 2082-09-24 status Closed"
     }
   ],
   "results": [],
