@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 from collections.abc import Callable
 from urllib.parse import quote
@@ -327,13 +328,22 @@ def _safe_fetch(
 def fetch_all_ipo_source_records(
     client: NepseDataClient | None = None,
 ) -> dict[str, list[dict[str, Any]]]:
-    upcoming_records = _safe_fetch(fetch_upcoming_ipo_records, "merolagani_upcoming")
-    nepselink_records = _safe_fetch(fetch_nepselink_ipo_opening_records, "nepselink_ipo_opening")
-    result_records = _safe_fetch(fetch_ipo_result_records, "merolagani_results")
-    disclosure_records = _safe_fetch(
-        lambda: fetch_nepse_ipo_disclosure_records(client=client),
-        "nepse_disclosures",
-    )
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        f_upcoming = executor.submit(_safe_fetch, fetch_upcoming_ipo_records, "merolagani_upcoming")
+        f_nepselink = executor.submit(
+            _safe_fetch, fetch_nepselink_ipo_opening_records, "nepselink_ipo_opening"
+        )
+        f_result = executor.submit(_safe_fetch, fetch_ipo_result_records, "merolagani_results")
+        f_disclosure = executor.submit(
+            _safe_fetch,
+            lambda: fetch_nepse_ipo_disclosure_records(client=client),
+            "nepse_disclosures",
+        )
+
+        upcoming_records = f_upcoming.result()
+        nepselink_records = f_nepselink.result()
+        result_records = f_result.result()
+        disclosure_records = f_disclosure.result()
 
     return {
         "upcoming_sources": nepselink_records + upcoming_records,
