@@ -6,6 +6,8 @@ from typing import Any
 
 from dateutil import parser as date_parser
 
+from scraper.ipo.common import normalize_issue_status
+
 ISSUE_TYPES: list[tuple[str, str]] = [
     ("debenture", "debenture"),
     ("mutual fund", "mutual_fund"),
@@ -24,22 +26,32 @@ RESERVED_KEYWORDS: dict[str, tuple[str, ...]] = {
     "general_public": ("general public", "public"),
 }
 
-RESULT_KEYWORDS: tuple[str, ...] = ("allotment", "allot", "result published", "allotted")
-
-NEPALI_MONTH_TOKENS: tuple[str, ...] = (
-    "baishakh",
-    "jestha",
-    "ashadh",
-    "shrawan",
-    "bhadra",
-    "ashwin",
-    "kartik",
-    "mangsir",
-    "poush",
-    "magh",
-    "falgun",
-    "chaitra",
+RESULT_KEYWORDS: tuple[str, ...] = (
+    "allotment",
+    "allot",
+    "result published",
+    "allotted",
+    "distributed",
+    "distribution",
+    "ipo result",
 )
+
+NEPALI_MONTH_TO_BS_MONTH: dict[str, int] = {
+    "baishakh": 1,
+    "jestha": 2,
+    "ashadh": 3,
+    "shrawan": 4,
+    "bhadra": 5,
+    "ashwin": 6,
+    "kartik": 7,
+    "mangsir": 8,
+    "poush": 9,
+    "magh": 10,
+    "falgun": 11,
+    "chaitra": 12,
+}
+
+NEPALI_MONTH_TOKENS: tuple[str, ...] = tuple(NEPALI_MONTH_TO_BS_MONTH)
 
 FUTURE_ISSUE_HINTS: tuple[str, ...] = (
     "going to issue",
@@ -84,7 +96,7 @@ def detect_reserved_for(text: str) -> list[str]:
     return sorted(set(reserved))
 
 
-def _safe_parse_date(value: str) -> str | None:
+def _safe_parse_ad_date(value: str) -> str | None:
     if not value:
         return None
     lowered = value.lower()
@@ -97,13 +109,56 @@ def _safe_parse_date(value: str) -> str | None:
         return None
 
 
+def _parse_bs_day_token(token: str) -> int | None:
+    match = re.match(r"(\d{1,2})", token.strip().lower())
+    if not match:
+        return None
+    day = int(match.group(1))
+    if 1 <= day <= 32:
+        return day
+    return None
+
+
+def _parse_bs_date(day_token: str, month_token: str, year_token: str) -> str | None:
+    month = NEPALI_MONTH_TO_BS_MONTH.get(month_token.strip().lower())
+    day = _parse_bs_day_token(day_token)
+
+    try:
+        year = int(year_token.strip())
+    except ValueError:
+        return None
+
+    if month is None or day is None or year < 1900:
+        return None
+
+    return f"{year:04d}-{month:02d}-{day:02d}"
+
+
+def _extract_bs_date(value: str) -> str | None:
+    match = re.search(
+        r"(\d{1,2}(?:st|nd|rd|th)?)\s+([A-Za-z]+),?\s*(\d{4})",
+        value,
+        flags=re.IGNORECASE,
+    )
+    if not match:
+        return None
+
+    return _parse_bs_date(match.group(1), match.group(2), match.group(3))
+
+
 def _to_date(value: str | None) -> date | None:
     if not value:
         return None
     try:
-        return datetime.fromisoformat(value).date()
+        parsed = datetime.fromisoformat(value).date()
     except ValueError:
         return None
+
+    # Year values like 2082 are typically BS dates, not AD dates.
+    if parsed.year >= 2070:
+        return None
+
+    return parsed
 
 
 def extract_issue_dates(text: str) -> tuple[str | None, str | None]:
@@ -118,13 +173,19 @@ def extract_issue_dates(text: str) -> tuple[str | None, str | None]:
         flags=re.IGNORECASE,
     )
     if same_month_range:
-        start_expr = (
-            f"{same_month_range.group(1)} {same_month_range.group(3)} {same_month_range.group(4)}"
-        )
-        end_expr = (
-            f"{same_month_range.group(2)} {same_month_range.group(3)} {same_month_range.group(4)}"
-        )
-        return _safe_parse_date(start_expr), _safe_parse_date(end_expr)
+        month_token = same_month_range.group(3)
+        year_token = same_month_range.group(4)
+        start_expr = f"{same_month_range.group(1)} {month_token} {year_token}"
+        end_expr = f"{same_month_range.group(2)} {month_token} {year_token}"
+
+        start_ad = _safe_parse_ad_date(start_expr)
+        end_ad = _safe_parse_ad_date(end_expr)
+        if start_ad or end_ad:
+            return start_ad, end_ad
+
+        start_bs = _parse_bs_date(same_month_range.group(1), month_token, year_token)
+        end_bs = _parse_bs_date(same_month_range.group(2), month_token, year_token)
+        return start_bs, end_bs
 
     date_expr = r"(?:\d{4}[-/]\d{1,2}[-/]\d{1,2}" r"|\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]+,?\s*\d{4})"
 
@@ -134,8 +195,10 @@ def extract_issue_dates(text: str) -> tuple[str | None, str | None]:
         flags=re.IGNORECASE,
     )
     if range_match:
-        start_date = _safe_parse_date(range_match.group(1))
-        end_date = _safe_parse_date(range_match.group(2))
+        start_raw = range_match.group(1)
+        end_raw = range_match.group(2)
+        start_date = _safe_parse_ad_date(start_raw) or _extract_bs_date(start_raw)
+        end_date = _safe_parse_ad_date(end_raw) or _extract_bs_date(end_raw)
         return start_date, end_date
 
     starts_match = re.search(
@@ -144,7 +207,8 @@ def extract_issue_dates(text: str) -> tuple[str | None, str | None]:
         flags=re.IGNORECASE,
     )
     if starts_match:
-        return _safe_parse_date(starts_match.group(1)), None
+        start_raw = starts_match.group(1)
+        return _safe_parse_ad_date(start_raw) or _extract_bs_date(start_raw), None
 
     return None, None
 
@@ -243,8 +307,18 @@ def extract_quantities_and_price(
 def extract_company_name(text: str) -> str | None:
     cleaned = normalize_text(text)
 
+    published_for = re.search(
+        r"(?:published\s+for|result\s+for)\s+(.+?)(?:$|\.|,)",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    if published_for:
+        company = published_for.group(1).strip(" -:,.")
+        if len(company) > 2:
+            return company
+
     pattern = re.search(
-        r"^(.+?)(?:\s+is\s+issuing|\s+is\s+going\s+to\s+issue|\s+has\s+opened|\s+publishes|\s+announces|\s+ipo)",
+        r"^(.+?)(?:\s+is\s+issuing|\s+is\s+going\s+to\s+issue|\s+has\s+opened|\s+has\s+distributed|\s+has\s+allotted|\s+publishes|\s+announces|\s+ipo\b)",
         cleaned,
         flags=re.IGNORECASE,
     )
@@ -269,19 +343,8 @@ def classify_ipo_entry(entry: dict[str, Any], record_type: str) -> dict[str, Any
     open_date = str(entry.get("issue_open_date") or open_date or "") or None
     close_date = str(entry.get("issue_close_date") or close_date or "") or None
 
-    explicit_status_raw = normalize_text(str(entry.get("issue_status", ""))).lower()
-    explicit_status_map = {
-        "coming soon": "upcoming",
-        "upcoming": "upcoming",
-        "open": "open",
-        "live": "open",
-        "closed": "closed",
-        "close": "closed",
-        "result": "result",
-    }
-    issue_status = explicit_status_map.get(explicit_status_raw) or derive_issue_status(
-        open_date, close_date, nature, full_text
-    )
+    explicit_status = normalize_issue_status(entry.get("issue_status"), default="")
+    issue_status = explicit_status or derive_issue_status(open_date, close_date, nature, full_text)
     min_quantity, max_quantity, total_quantity, price_per_unit = extract_quantities_and_price(
         full_text
     )

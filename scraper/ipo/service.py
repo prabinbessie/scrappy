@@ -6,7 +6,10 @@ from typing import Any
 from scraper.config import IPO_FEED_JSON
 from scraper.io import write_json
 from scraper.ipo.classifier import classify_ipo_entry
+from scraper.ipo.common import normalize_issue_status
 from scraper.ipo.sources import fetch_all_ipo_source_records
+
+STATUS_GROUP_KEYS: tuple[str, ...] = ("upcoming", "open", "closed", "result", "unknown")
 
 
 def _normalize_quantity_token(value: Any) -> str:
@@ -24,20 +27,6 @@ def _normalize_quantity_token(value: Any) -> str:
 
     normalized = f"{numeric:.8f}".rstrip("0").rstrip(".")
     return normalized
-
-
-def _normalize_issue_status(value: Any) -> str:
-    lowered = str(value or "").strip().lower()
-    mapping = {
-        "coming soon": "upcoming",
-        "upcoming": "upcoming",
-        "open": "open",
-        "live": "open",
-        "closed": "closed",
-        "close": "closed",
-        "result": "result",
-    }
-    return mapping.get(lowered, "unknown")
 
 
 def _record_key(item: dict[str, Any]) -> str:
@@ -70,16 +59,10 @@ def _deduplicate(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _group_by_status(records: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
-    grouped: dict[str, list[dict[str, Any]]] = {
-        "upcoming": [],
-        "open": [],
-        "closed": [],
-        "result": [],
-        "unknown": [],
-    }
+    grouped: dict[str, list[dict[str, Any]]] = {status: [] for status in STATUS_GROUP_KEYS}
 
     for record in records:
-        status = _normalize_issue_status(record.get("issue_status", "unknown"))
+        status = normalize_issue_status(record.get("issue_status", "unknown"))
         grouped.setdefault(status, []).append(record)
 
     return grouped
@@ -97,18 +80,23 @@ def _count_dict_items(records: list[dict[str, Any]] | list[Any]) -> int:
     return sum(1 for item in records if isinstance(item, dict))
 
 
+def _classify_entries(records: list[dict[str, Any]], record_type: str) -> list[dict[str, Any]]:
+    return [classify_ipo_entry(item, record_type) for item in records]
+
+
 def scrape_ipo_to_json() -> dict[str, Any]:
     source_bundle = fetch_all_ipo_source_records()
 
     upcoming_raw = source_bundle.get("upcoming_sources", [])
+    merolagani_upcoming_raw = source_bundle.get("merolagani_upcoming_sources", upcoming_raw)
     results_raw = source_bundle.get("result_sources", [])
     disclosures_raw = source_bundle.get("nepse_disclosure_sources", [])
     nepselink_raw = source_bundle.get("nepselink_sources", [])
 
     combined_issues_raw = upcoming_raw + disclosures_raw
 
-    classified_issues = [classify_ipo_entry(item, "issue") for item in combined_issues_raw]
-    classified_results = [classify_ipo_entry(item, "result") for item in results_raw]
+    classified_issues = _classify_entries(combined_issues_raw, "issue")
+    classified_results = _classify_entries(results_raw, "result")
 
     deduped_issues = _deduplicate(classified_issues)
     deduped_results = _deduplicate(classified_results)
@@ -122,7 +110,7 @@ def scrape_ipo_to_json() -> dict[str, Any]:
     results = _sort_latest(_deduplicate(deduped_results + grouped_issues.get("result", [])))
 
     source_counts = {
-        "merolagani_upcoming": _count_dict_items(upcoming_raw),
+        "merolagani_upcoming": _count_dict_items(merolagani_upcoming_raw),
         "nepselink_ipo_opening": _count_dict_items(nepselink_raw),
         "merolagani_results": _count_dict_items(results_raw),
         "nepse_disclosures": _count_dict_items(disclosures_raw),

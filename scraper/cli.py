@@ -22,7 +22,12 @@ def main() -> None:
 
     if args.command in {"market", "all"}:
         market_result = scrape_market_to_csv()
-        print("Market scrape completed")
+        if market_result.get("skipped"):
+            print("Market scrape skipped (outside trading window 11:00-15:05 NPT).")
+            print(f"- Reason: {market_result['price_source']}")
+        else:
+            print("Market scrape completed")
+            print(f"- Data date: {market_result.get('partition_date', 'unknown')}")
         print(f"- Source used: {market_result['price_source']}")
         print(f"- Market summary rows written: {market_result['summary_rows_written']}")
         print(f"- Price rows written: {market_result['price_rows_written']}")

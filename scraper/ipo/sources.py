@@ -3,19 +3,21 @@ from __future__ import annotations
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any
 from collections.abc import Callable
-from urllib.parse import quote
+from typing import Any
+from urllib.parse import quote, urljoin
 
 import requests
 from bs4 import BeautifulSoup
 
 from scraper.config import (
+    IPO_ANNOUNCEMENTS_URL,
     IPO_RESULTS_URL,
     IPO_UPCOMING_URL,
     NEPSELINK_IPO_OPENING_URL,
     SCRAPPY_TIMEOUT_SECONDS,
 )
+from scraper.ipo.common import normalize_issue_status
 from scraper.nepse.client import NepseDataClient
 
 logger = logging.getLogger(__name__)
@@ -23,6 +25,67 @@ logger = logging.getLogger(__name__)
 DEFAULT_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
 }
+
+RESULT_STRICT_KEYWORDS: tuple[str, ...] = (
+    "allot",
+    "allotment",
+    "result",
+    "distributed",
+)
+
+GENERIC_RESULT_TITLES: tuple[str, ...] = (
+    "ipo result",
+    "ipo results",
+)
+
+ISSUE_SIGNAL_KEYWORDS: tuple[str, ...] = (
+    "ipo",
+    "fpo",
+    "debenture",
+    "right share",
+    "public offering",
+)
+
+DISCLOSURE_KEYWORDS: tuple[str, ...] = (
+    "ipo",
+    "fpo",
+    "debenture",
+    "right share",
+)
+
+
+def _contains_any(text: str, keywords: tuple[str, ...]) -> bool:
+    lowered = text.lower()
+    return any(keyword in lowered for keyword in keywords)
+
+
+def _build_record(
+    *,
+    title: str,
+    details: str,
+    announcement_date: str | None,
+    source_url: str,
+    href: str | None,
+    source_name: str,
+) -> dict[str, Any]:
+    return {
+        "title": title,
+        "details": details,
+        "announcement_date": announcement_date,
+        "url": _join_url(source_url, href),
+        "source": source_name,
+    }
+
+
+def _is_ipo_result_text(text: str) -> bool:
+    has_result_signal = _contains_any(text, RESULT_STRICT_KEYWORDS)
+    has_issue_signal = _contains_any(text, ISSUE_SIGNAL_KEYWORDS)
+    return has_result_signal and has_issue_signal
+
+
+def _is_meaningful_result_title(text: str) -> bool:
+    normalized = " ".join(text.lower().split())
+    return _is_ipo_result_text(text) and normalized not in GENERIC_RESULT_TITLES
 
 
 def fetch_html(url: str) -> str:
@@ -48,14 +111,15 @@ def fetch_html(url: str) -> str:
 def _join_url(base_url: str, href: str | None) -> str | None:
     if not href:
         return None
-    if href.startswith("http://") or href.startswith("https://"):
-        return href
-    if href.startswith("/"):
-        return "https://merolagani.com" + href
-    return base_url.rstrip("/") + "/" + href
+    return urljoin(base_url, href)
 
 
-def parse_upcoming_ipo_page(html: str, source_url: str) -> list[dict[str, Any]]:
+def _parse_merolagani_media_records(
+    html: str,
+    source_url: str,
+    source_name: str,
+    title_filter: Callable[[str], bool] | None = None,
+) -> list[dict[str, Any]]:
     soup = BeautifulSoup(html, "html.parser")
     container = soup.find("div", class_="announcement-list")
     if not container:
@@ -72,21 +136,30 @@ def parse_upcoming_ipo_page(html: str, source_url: str) -> list[dict[str, Any]]:
             continue
 
         title = link.get_text(" ", strip=True)
-        details = body.get_text(" ", strip=True)
-        date_tag = item.find("small", class_="text-muted")
-        announcement_date = date_tag.get_text(" ", strip=True) if date_tag else None
+        if title_filter and not title_filter(title):
+            continue
 
+        date_tag = item.find("small", class_="text-muted")
         records.append(
-            {
-                "title": title,
-                "details": details,
-                "announcement_date": announcement_date,
-                "url": _join_url(source_url, link.get("href")),
-                "source": "merolagani_upcoming",
-            }
+            _build_record(
+                title=title,
+                details=body.get_text(" ", strip=True),
+                announcement_date=date_tag.get_text(" ", strip=True) if date_tag else None,
+                source_url=source_url,
+                href=link.get("href"),
+                source_name=source_name,
+            )
         )
 
     return records
+
+
+def parse_upcoming_ipo_page(html: str, source_url: str) -> list[dict[str, Any]]:
+    return _parse_merolagani_media_records(
+        html,
+        source_url,
+        "merolagani_upcoming",
+    )
 
 
 def parse_ipo_result_page(html: str, source_url: str) -> list[dict[str, Any]]:
@@ -104,15 +177,20 @@ def parse_ipo_result_page(html: str, source_url: str) -> list[dict[str, Any]]:
             title = (
                 title_tag.get_text(" ", strip=True) if title_tag else link.get_text(" ", strip=True)
             )
-            date_tag = block.find("span", class_="text-org")
-            announcement_date = date_tag.get_text(" ", strip=True) if date_tag else None
+            if not _is_meaningful_result_title(title):
+                continue
 
+            resolved_url = _join_url(source_url, link.get("href"))
+            if not resolved_url or resolved_url.rstrip("/") == source_url.rstrip("/"):
+                continue
+
+            date_tag = block.find("span", class_="text-org")
             records.append(
                 {
                     "title": title,
                     "details": title,
-                    "announcement_date": announcement_date,
-                    "url": _join_url(source_url, link.get("href")),
+                    "announcement_date": date_tag.get_text(" ", strip=True) if date_tag else None,
+                    "url": resolved_url,
                     "source": "merolagani_results",
                 }
             )
@@ -120,21 +198,31 @@ def parse_ipo_result_page(html: str, source_url: str) -> list[dict[str, Any]]:
     if not blocks:
         for link in soup.find_all("a"):
             text = link.get_text(" ", strip=True)
-            lowered = text.lower()
-            if "ipo" in lowered and any(
-                word in lowered for word in ["allot", "result", "allotment"]
-            ):
+            if _is_meaningful_result_title(text):
+                resolved_url = _join_url(source_url, link.get("href"))
+                if not resolved_url or resolved_url.rstrip("/") == source_url.rstrip("/"):
+                    continue
+
                 records.append(
                     {
                         "title": text,
                         "details": text,
                         "announcement_date": None,
-                        "url": _join_url(source_url, link.get("href")),
+                        "url": resolved_url,
                         "source": "merolagani_results",
                     }
                 )
 
     return records
+
+
+def parse_announcement_result_page(html: str, source_url: str) -> list[dict[str, Any]]:
+    return _parse_merolagani_media_records(
+        html,
+        source_url,
+        "merolagani_announcements",
+        title_filter=_is_meaningful_result_title,
+    )
 
 
 def _to_float(value: str | None) -> float | None:
@@ -147,17 +235,6 @@ def _to_float(value: str | None) -> float | None:
         return float(cleaned)
     except ValueError:
         return None
-
-
-def _normalize_status(value: str) -> str:
-    lowered = value.strip().lower()
-    if lowered in {"coming soon", "upcoming"}:
-        return "upcoming"
-    if lowered in {"closed", "close"}:
-        return "closed"
-    if lowered in {"open", "live"}:
-        return "open"
-    return "unknown"
 
 
 def parse_nepselink_ipo_opening_page(html: str, source_url: str) -> list[dict[str, Any]]:
@@ -184,7 +261,7 @@ def parse_nepselink_ipo_opening_page(html: str, source_url: str) -> list[dict[st
             open_date = values[5].strip() or None
             close_date = values[6].strip() or None
             status_raw = values[7].strip()
-            normalized_status = _normalize_status(status_raw)
+            normalized_status = normalize_issue_status(status_raw)
             announcement_date = open_date
             if normalized_status == "closed":
                 announcement_date = close_date or open_date
@@ -224,8 +301,26 @@ def fetch_upcoming_ipo_records() -> list[dict[str, Any]]:
 
 
 def fetch_ipo_result_records() -> list[dict[str, Any]]:
-    html = fetch_html(IPO_RESULTS_URL)
-    return parse_ipo_result_page(html, IPO_RESULTS_URL)
+    records: list[dict[str, Any]] = []
+
+    result_sources: tuple[tuple[str, str, Callable[[str, str], list[dict[str, Any]]]], ...] = (
+        ("IPO result page", IPO_RESULTS_URL, parse_ipo_result_page),
+        (
+            "announcement result page",
+            IPO_ANNOUNCEMENTS_URL,
+            parse_announcement_result_page,
+        ),
+    )
+    for source_label, source_url, parser in result_sources:
+        try:
+            html = fetch_html(source_url)
+        except requests.RequestException as exc:
+            logger.warning("Skipping %s due to fetch error: %s", source_label, exc)
+            continue
+
+        records.extend(parser(html, source_url))
+
+    return records
 
 
 def fetch_nepselink_ipo_opening_records() -> list[dict[str, Any]]:
@@ -240,6 +335,10 @@ def _attachment_url(file_path: str | None) -> str | None:
         return file_path
     encoded = quote(file_path, safe="/%")
     return f"https://www.nepalstock.com.np/api/nots/security/fetchFiles?fileLocation={encoded}"
+
+
+def _has_disclosure_issue_keyword(*parts: str) -> bool:
+    return _contains_any(" ".join(parts), DISCLOSURE_KEYWORDS)
 
 
 def fetch_nepse_ipo_disclosure_records(
@@ -258,13 +357,7 @@ def fetch_nepse_ipo_disclosure_records(
 
         title = (item.get("newsHeadline") or "").strip()
         body = (item.get("newsBody") or "").strip()
-        text = f"{title} {body}".lower()
-        if (
-            "ipo" not in text
-            and "fpo" not in text
-            and "debenture" not in text
-            and "right share" not in text
-        ):
+        if not _has_disclosure_issue_keyword(title, body):
             continue
 
         url = None
@@ -290,13 +383,7 @@ def fetch_nepse_ipo_disclosure_records(
 
         title = (item.get("messageTitle") or "").strip()
         body = (item.get("messageBody") or "").strip()
-        text = f"{title} {body}".lower()
-        if (
-            "ipo" not in text
-            and "fpo" not in text
-            and "debenture" not in text
-            and "right share" not in text
-        ):
+        if not _has_disclosure_issue_keyword(title, body):
             continue
 
         records.append(
@@ -328,25 +415,34 @@ def _safe_fetch(
 def fetch_all_ipo_source_records(
     client: NepseDataClient | None = None,
 ) -> dict[str, list[dict[str, Any]]]:
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        f_upcoming = executor.submit(_safe_fetch, fetch_upcoming_ipo_records, "merolagani_upcoming")
-        f_nepselink = executor.submit(
-            _safe_fetch, fetch_nepselink_ipo_opening_records, "nepselink_ipo_opening"
-        )
-        f_result = executor.submit(_safe_fetch, fetch_ipo_result_records, "merolagani_results")
-        f_disclosure = executor.submit(
-            _safe_fetch,
+    fetch_jobs: dict[str, tuple[Callable[[], list[dict[str, Any]]], str]] = {
+        "upcoming_records": (fetch_upcoming_ipo_records, "merolagani_upcoming"),
+        "nepselink_records": (
+            fetch_nepselink_ipo_opening_records,
+            "nepselink_ipo_opening",
+        ),
+        "result_records": (fetch_ipo_result_records, "merolagani_results"),
+        "disclosure_records": (
             lambda: fetch_nepse_ipo_disclosure_records(client=client),
             "nepse_disclosures",
-        )
+        ),
+    }
 
-        upcoming_records = f_upcoming.result()
-        nepselink_records = f_nepselink.result()
-        result_records = f_result.result()
-        disclosure_records = f_disclosure.result()
+    with ThreadPoolExecutor(max_workers=len(fetch_jobs)) as executor:
+        futures = {
+            result_key: executor.submit(_safe_fetch, fetcher, source_name)
+            for result_key, (fetcher, source_name) in fetch_jobs.items()
+        }
+        fetched = {result_key: future.result() for result_key, future in futures.items()}
+
+    upcoming_records = fetched["upcoming_records"]
+    nepselink_records = fetched["nepselink_records"]
+    result_records = fetched["result_records"]
+    disclosure_records = fetched["disclosure_records"]
 
     return {
         "upcoming_sources": nepselink_records + upcoming_records,
+        "merolagani_upcoming_sources": upcoming_records,
         "result_sources": result_records,
         "nepse_disclosure_sources": disclosure_records,
         "nepselink_sources": nepselink_records,

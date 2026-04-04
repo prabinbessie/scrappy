@@ -3,6 +3,7 @@ from pathlib import Path
 from scraper.io import append_rows_to_csv
 from scraper.ipo.sources import (
     fetch_all_ipo_source_records,
+    parse_announcement_result_page,
     parse_ipo_result_page,
     parse_nepselink_ipo_opening_page,
     parse_upcoming_ipo_page,
@@ -38,6 +39,36 @@ def test_parse_ipo_result_page() -> None:
     rows = parse_ipo_result_page(html, "https://merolagani.com")
     assert len(rows) == 1
     assert "allotment" in rows[0]["title"].lower()
+
+
+def test_parse_ipo_result_page_ignores_generic_result_title() -> None:
+    html = """
+    <div class="featured-news-list">
+      <a href="/IpoResult.aspx"><h4>IPO Results</h4></a>
+      <span class="text-org">2026-03-23</span>
+    </div>
+    """
+
+    rows = parse_ipo_result_page(html, "https://merolagani.com/IpoResult.aspx")
+    assert rows == []
+
+
+def test_parse_announcement_result_page() -> None:
+    html = """
+    <div class="announcement-list">
+      <div class="media">
+        <small class="text-muted">Apr 04, 2026</small>
+        <div class="media-body">
+          <a href="/AnnouncementDetail.aspx?id=64978">Kalanga Hydro Limited has distributed its 3,50,000.00 units of IPO shares to the Nepalese citizens working abroad</a>
+        </div>
+      </div>
+    </div>
+    """
+
+    rows = parse_announcement_result_page(html, "https://merolagani.com/AnnouncementList.aspx")
+    assert len(rows) == 1
+    assert rows[0]["source"] == "merolagani_announcements"
+    assert rows[0]["url"] == "https://merolagani.com/AnnouncementDetail.aspx?id=64978"
 
 
 def test_parse_nepselink_ipo_opening_page() -> None:
@@ -128,6 +159,7 @@ def test_fetch_all_ipo_source_records_tolerates_source_processing_error(monkeypa
     bundle = fetch_all_ipo_source_records()
 
     assert bundle["upcoming_sources"] == []
+    assert bundle["merolagani_upcoming_sources"] == []
     assert bundle["result_sources"] == []
     assert bundle["nepse_disclosure_sources"] == []
     assert bundle["nepselink_sources"] == []

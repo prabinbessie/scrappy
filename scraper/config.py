@@ -12,10 +12,13 @@ IPO_DATA_DIR = DATA_DIR / "ipo"
 IPO_FEED_JSON = IPO_DATA_DIR / "ipo_feed.json"
 
 IPO_UPCOMING_URL = os.getenv("IPO_UPCOMING_URL", "https://merolagani.com/Ipo.aspx?type=upcoming")
+IPO_ANNOUNCEMENTS_URL = os.getenv(
+    "IPO_ANNOUNCEMENTS_URL", "https://merolagani.com/AnnouncementList.aspx"
+)
 NEPSELINK_IPO_OPENING_URL = os.getenv(
     "NEPSELINK_IPO_OPENING_URL", "https://nepselink.com/ipo-opening"
 )
-IPO_RESULTS_URL = os.getenv("IPO_RESULTS_URL", "https://merolagani.com/Announcements.aspx")
+IPO_RESULTS_URL = os.getenv("IPO_RESULTS_URL", "https://merolagani.com/IpoResult.aspx")
 SHARESANSAR_LIVE_URL = os.getenv("SHARESANSAR_LIVE_URL", "https://www.sharesansar.com/live-trading")
 
 SCRAPPY_TIMEOUT_SECONDS = float(os.getenv("SCRAPPY_TIMEOUT_SECONDS", "15"))
