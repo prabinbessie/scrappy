@@ -56,5 +56,19 @@ def test_classify_ipo_entry_nepali_month_range_defaults_to_upcoming() -> None:
     classified = classify_ipo_entry(entry, "issue")
 
     assert classified["issue_status"] == "upcoming"
-    assert classified["issue_open_date"] is None
-    assert classified["issue_close_date"] is None
+    assert classified["issue_open_date"] == "2082-12-22"
+    assert classified["issue_close_date"] == "2082-12-25"
+
+
+def test_classify_ipo_result_entry_extracts_clean_company_name() -> None:
+    entry = {
+        "title": "Sopan Pharmaceuticals Limited has distributed its 4,29,000.00 units of IPO shares to the Nepalese citizens working abroad on Chaitra 17, 2082",
+        "details": "Sopan Pharmaceuticals Limited has distributed its 4,29,000.00 units of IPO shares to the Nepalese citizens working abroad on Chaitra 17, 2082",
+        "announcement_date": "Apr 01, 2026",
+        "url": "https://merolagani.com/AnnouncementDetail.aspx?id=64961",
+        "source": "merolagani_announcements",
+    }
+
+    classified = classify_ipo_entry(entry, "result")
+
+    assert classified["company_name"] == "Sopan Pharmaceuticals Limited"

@@ -174,3 +174,65 @@ def test_scrape_ipo_to_json_normalizes_status_aliases(monkeypatch, tmp_path: Pat
     assert payload["meta"]["open_count"] == 1
     assert payload["meta"]["closed_count"] == 1
     assert payload["meta"]["unknown_count"] == 0
+
+
+def test_scrape_ipo_to_json_counts_merolagani_upcoming_separately(
+    monkeypatch, tmp_path: Path
+) -> None:
+    fake_bundle = {
+        "upcoming_sources": [
+            {
+                "title": "Alpha IPO opens from 2026-04-01 to 2026-04-05",
+                "details": "IPO",
+                "announcement_date": "2026-03-31",
+                "url": "https://nepselink.com/ipo-opening",
+                "source": "nepselink_ipo_opening",
+                "company": "Alpha",
+                "issue_type": "IPO-GENERAL",
+                "issue_open_date": "2026-04-01",
+                "issue_close_date": "2026-04-05",
+                "total_quantity": 1000,
+                "issue_status": "upcoming",
+            },
+            {
+                "title": "Beta IPO opens from 2026-04-01 to 2026-04-05",
+                "details": "IPO",
+                "announcement_date": "2026-03-31",
+                "url": "https://merolagani.com/NewsDetail.aspx?newsID=1",
+                "source": "merolagani_upcoming",
+            },
+        ],
+        "merolagani_upcoming_sources": [
+            {
+                "title": "Beta IPO opens from 2026-04-01 to 2026-04-05",
+                "details": "IPO",
+                "announcement_date": "2026-03-31",
+                "url": "https://merolagani.com/NewsDetail.aspx?newsID=1",
+                "source": "merolagani_upcoming",
+            }
+        ],
+        "result_sources": [],
+        "nepse_disclosure_sources": [],
+        "nepselink_sources": [
+            {
+                "title": "Alpha IPO opens from 2026-04-01 to 2026-04-05",
+                "details": "IPO",
+                "announcement_date": "2026-03-31",
+                "url": "https://nepselink.com/ipo-opening",
+                "source": "nepselink_ipo_opening",
+                "company": "Alpha",
+                "issue_type": "IPO-GENERAL",
+                "issue_open_date": "2026-04-01",
+                "issue_close_date": "2026-04-05",
+                "total_quantity": 1000,
+                "issue_status": "upcoming",
+            }
+        ],
+    }
+
+    monkeypatch.setattr(service, "fetch_all_ipo_source_records", lambda client=None: fake_bundle)
+    monkeypatch.setattr(service, "IPO_FEED_JSON", tmp_path / "ipo_feed.json")
+
+    payload = service.scrape_ipo_to_json()
+    assert payload["meta"]["sources"]["merolagani_upcoming"] == 1
+    assert payload["meta"]["sources"]["nepselink_ipo_opening"] == 1

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, time, timezone
+from datetime import date, datetime, time, timezone
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -12,7 +12,7 @@ from scraper.nepse.fallback import fetch_sharesansar_live_rows
 
 NPT_TZ = ZoneInfo("Asia/Kathmandu")
 MARKET_OPEN_TIME_NPT = time(11, 0)
-MARKET_CLOSE_TIME_NPT = time(15, 0)
+MARKET_CUTOFF_TIME_NPT = time(15, 5)
 
 MARKET_SUMMARY_FIELDS = [
     "scraped_at_utc",
@@ -87,6 +87,33 @@ PRICE_KEY_ALIASES: dict[str, list[str]] = {
     "total_trades": ["totalTrades", "numberOfTransactions"],
 }
 
+SUMMARY_KEY_ALIASES: dict[str, list[str]] = {
+    "as_of_date": ["asOf", "businessDate", "date"],
+    "total_turnover": ["totalTurnover", "totalTurnoverRs"],
+    "total_traded_shares": ["totalTradedShares", "totalVolume"],
+    "total_transactions": ["totalTransactions"],
+    "total_trades": ["totalTrades"],
+    "total_market_cap": ["totalMarketCapitalization", "totalMarketCap"],
+    "floated_market_cap": ["floatMarketCapitalization", "floatedMarketCap"],
+    "nepse_index": ["index", "nepseIndex"],
+    "nepse_point_change": ["pointChange", "change"],
+    "nepse_percentage_change": ["percentageChange", "perChange"],
+}
+
+PRICE_NUMERIC_FIELDS: tuple[str, ...] = (
+    "open_price",
+    "high_price",
+    "low_price",
+    "close_price",
+    "last_traded_price",
+    "previous_close",
+    "point_change",
+    "percentage_change",
+    "total_traded_quantity",
+    "total_traded_value",
+    "total_trades",
+)
+
 
 def _pick(source: dict[str, Any], keys: list[str], default: Any = None) -> Any:
     for key in keys:
@@ -114,6 +141,12 @@ def _safe_div(numerator: float | None, denominator: float | None) -> float | Non
     return numerator / denominator
 
 
+def _to_percent(value: float | None) -> float | None:
+    if value is None:
+        return None
+    return value * 100
+
+
 def _time_dimensions(scraped_at_utc: str, scraped_at_npt: str) -> dict[str, int | str]:
     scraped_dt = datetime.fromisoformat(scraped_at_utc)
     scraped_npt = datetime.fromisoformat(scraped_at_npt)
@@ -130,13 +163,52 @@ def _time_dimensions(scraped_at_utc: str, scraped_at_npt: str) -> dict[str, int 
 
 def _is_within_trading_window(scraped_at_npt: datetime) -> bool:
     current = scraped_at_npt.time().replace(tzinfo=None)
-    return MARKET_OPEN_TIME_NPT <= current < MARKET_CLOSE_TIME_NPT
+    return MARKET_OPEN_TIME_NPT <= current <= MARKET_CUTOFF_TIME_NPT
 
 
-def _daily_market_paths(scraped_at_npt: datetime) -> tuple[Path, Path]:
-    year = f"{scraped_at_npt.year:04d}"
-    month = f"{scraped_at_npt.month:02d}"
-    day = scraped_at_npt.date().isoformat()
+def _parse_date_token(value: Any) -> date | None:
+    if not value:
+        return None
+
+    text = str(value).strip()
+    if not text:
+        return None
+
+    # Keep strict parsing for stable partition keys.
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(text[:10], fmt).date()
+        except ValueError:
+            continue
+
+    try:
+        return datetime.fromisoformat(text).date()
+    except ValueError:
+        return None
+
+
+def _resolve_partition_date(
+    summary: dict[str, Any],
+    today_price: list[dict[str, Any]],
+    now_npt: datetime,
+) -> date:
+    summary_date = _parse_date_token(_pick(summary, ["asOf", "businessDate", "date"]))
+    if summary_date is not None:
+        return summary_date
+
+    if today_price:
+        first = today_price[0]
+        price_date = _parse_date_token(_pick(first, ["businessDate", "asOf"]))
+        if price_date is not None:
+            return price_date
+
+    return now_npt.date()
+
+
+def _daily_market_paths(partition_date: date) -> tuple[Path, Path]:
+    year = f"{partition_date.year:04d}"
+    month = f"{partition_date.month:02d}"
+    day = partition_date.isoformat()
     base = NEPSE_DATA_DIR / year / month
     return (
         base / f"market_summary_{day}.csv",
@@ -144,22 +216,49 @@ def _daily_market_paths(scraped_at_npt: datetime) -> tuple[Path, Path]:
     )
 
 
-def _resolved_price_values(item: dict[str, Any]) -> dict[str, Any]:
+def _resolved_summary_values(summary: dict[str, Any]) -> dict[str, Any]:
     return {
-        "business_date": _pick(item, PRICE_KEY_ALIASES["business_date"]),
-        "symbol": _pick(item, PRICE_KEY_ALIASES["symbol"]),
-        "security_name": _pick(item, PRICE_KEY_ALIASES["security_name"]),
-        "open_price": _to_float(_pick(item, PRICE_KEY_ALIASES["open_price"])),
-        "high_price": _to_float(_pick(item, PRICE_KEY_ALIASES["high_price"])),
-        "low_price": _to_float(_pick(item, PRICE_KEY_ALIASES["low_price"])),
-        "close_price": _to_float(_pick(item, PRICE_KEY_ALIASES["close_price"])),
-        "last_traded_price": _to_float(_pick(item, PRICE_KEY_ALIASES["last_traded_price"])),
-        "previous_close": _to_float(_pick(item, PRICE_KEY_ALIASES["previous_close"])),
-        "point_change": _to_float(_pick(item, PRICE_KEY_ALIASES["point_change"])),
-        "percentage_change": _to_float(_pick(item, PRICE_KEY_ALIASES["percentage_change"])),
-        "total_traded_quantity": _to_float(_pick(item, PRICE_KEY_ALIASES["total_traded_quantity"])),
-        "total_traded_value": _to_float(_pick(item, PRICE_KEY_ALIASES["total_traded_value"])),
-        "total_trades": _to_float(_pick(item, PRICE_KEY_ALIASES["total_trades"])),
+        field_name: _pick(summary, aliases) for field_name, aliases in SUMMARY_KEY_ALIASES.items()
+    }
+
+
+def _resolved_price_values(item: dict[str, Any]) -> dict[str, Any]:
+    values = {field_name: _pick(item, aliases) for field_name, aliases in PRICE_KEY_ALIASES.items()}
+
+    for field_name in PRICE_NUMERIC_FIELDS:
+        values[field_name] = _to_float(values.get(field_name))
+
+    return values
+
+
+def _derived_price_metrics(values: dict[str, Any]) -> dict[str, float | None]:
+    open_price = values["open_price"]
+    high_price = values["high_price"]
+    low_price = values["low_price"]
+    last_traded_price = values["last_traded_price"]
+    previous_close = values["previous_close"]
+    point_change = values["point_change"]
+    total_traded_quantity = values["total_traded_quantity"]
+    total_traded_value = values["total_traded_value"]
+    total_trades = values["total_trades"]
+
+    intraday_range = None
+    if high_price is not None and low_price is not None:
+        intraday_range = high_price - low_price
+
+    return_from_prev_close = None
+    if last_traded_price is not None and previous_close is not None:
+        return_from_prev_close = last_traded_price - previous_close
+
+    return {
+        "point_change": point_change if point_change is not None else return_from_prev_close,
+        "intraday_range": intraday_range,
+        "intraday_range_pct_of_open": _to_percent(_safe_div(intraday_range, open_price)),
+        "return_from_prev_close_pct": _to_percent(
+            _safe_div(return_from_prev_close, previous_close)
+        ),
+        "turnover_per_trade": _safe_div(total_traded_value, total_trades),
+        "vwap_proxy": _safe_div(total_traded_value, total_traded_quantity),
     }
 
 
@@ -171,16 +270,7 @@ def _build_market_summary_row(
         "scraped_at_utc": scraped_at_utc,
         **time_values,
         "is_market_open": _pick(status, ["isOpen", "status"], "CLOSE"),
-        "as_of_date": _pick(summary, ["asOf", "businessDate", "date"]),
-        "total_turnover": _pick(summary, ["totalTurnover", "totalTurnoverRs"]),
-        "total_traded_shares": _pick(summary, ["totalTradedShares", "totalVolume"]),
-        "total_transactions": _pick(summary, ["totalTransactions"]),
-        "total_trades": _pick(summary, ["totalTrades"]),
-        "total_market_cap": _pick(summary, ["totalMarketCapitalization", "totalMarketCap"]),
-        "floated_market_cap": _pick(summary, ["floatMarketCapitalization", "floatedMarketCap"]),
-        "nepse_index": _pick(summary, ["index", "nepseIndex"]),
-        "nepse_point_change": _pick(summary, ["pointChange", "change"]),
-        "nepse_percentage_change": _pick(summary, ["percentageChange", "perChange"]),
+        **_resolved_summary_values(summary),
     }
 
 
@@ -197,38 +287,7 @@ def _build_today_price_rows(
 
     for item in today_price:
         values = _resolved_price_values(item)
-        open_price = values["open_price"]
-        high_price = values["high_price"]
-        low_price = values["low_price"]
-        close_price = values["close_price"]
-        last_traded_price = values["last_traded_price"]
-        previous_close = values["previous_close"]
-        point_change = values["point_change"]
-        total_traded_quantity = values["total_traded_quantity"]
-        total_traded_value = values["total_traded_value"]
-        total_trades = values["total_trades"]
-
-        intraday_range = None
-        if high_price is not None and low_price is not None:
-            intraday_range = high_price - low_price
-
-        intraday_range_pct_of_open = _safe_div(intraday_range, open_price)
-        if intraday_range_pct_of_open is not None:
-            intraday_range_pct_of_open *= 100
-
-        return_from_prev_close_pct = _safe_div(
-            (
-                (last_traded_price - previous_close)
-                if last_traded_price is not None and previous_close is not None
-                else None
-            ),
-            previous_close,
-        )
-        if return_from_prev_close_pct is not None:
-            return_from_prev_close_pct *= 100
-
-        turnover_per_trade = _safe_div(total_traded_value, total_trades)
-        vwap_proxy = _safe_div(total_traded_value, total_traded_quantity)
+        derived = _derived_price_metrics(values)
 
         row = {
             "scraped_at_utc": scraped_at_utc,
@@ -238,30 +297,22 @@ def _build_today_price_rows(
             "business_date": values["business_date"],
             "symbol": values["symbol"],
             "security_name": values["security_name"],
-            "open_price": open_price,
-            "high_price": high_price,
-            "low_price": low_price,
-            "close_price": close_price,
-            "last_traded_price": last_traded_price,
-            "previous_closing_price": previous_close,
-            "point_change": (
-                point_change
-                if point_change is not None
-                else (
-                    last_traded_price - previous_close
-                    if last_traded_price is not None and previous_close is not None
-                    else None
-                )
-            ),
+            "open_price": values["open_price"],
+            "high_price": values["high_price"],
+            "low_price": values["low_price"],
+            "close_price": values["close_price"],
+            "last_traded_price": values["last_traded_price"],
+            "previous_closing_price": values["previous_close"],
+            "point_change": derived["point_change"],
             "percentage_change": values["percentage_change"],
-            "total_traded_quantity": total_traded_quantity,
-            "total_traded_value": total_traded_value,
-            "total_trades": total_trades,
-            "intraday_range": intraday_range,
-            "intraday_range_pct_of_open": intraday_range_pct_of_open,
-            "return_from_prev_close_pct": return_from_prev_close_pct,
-            "turnover_per_trade": turnover_per_trade,
-            "vwap_proxy": vwap_proxy,
+            "total_traded_quantity": values["total_traded_quantity"],
+            "total_traded_value": values["total_traded_value"],
+            "total_trades": values["total_trades"],
+            "intraday_range": derived["intraday_range"],
+            "intraday_range_pct_of_open": derived["intraday_range_pct_of_open"],
+            "return_from_prev_close_pct": derived["return_from_prev_close_pct"],
+            "turnover_per_trade": derived["turnover_per_trade"],
+            "vwap_proxy": derived["vwap_proxy"],
         }
         rows.append(row)
 
@@ -297,6 +348,8 @@ def scrape_market_to_csv(client: NepseDataClient | None = None) -> dict[str, Any
         today_price = fetch_sharesansar_live_rows()
         price_source = "sharesansar_fallback"
 
+    partition_date = _resolve_partition_date(summary, today_price, now_npt)
+
     summary_row = _build_market_summary_row(summary, status, scraped_at_utc, scraped_at_npt)
     today_price_rows = _build_today_price_rows(
         today_price,
@@ -305,7 +358,7 @@ def scrape_market_to_csv(client: NepseDataClient | None = None) -> dict[str, Any
         scraped_at_npt,
         price_source,
     )
-    summary_csv_path, price_csv_path = _daily_market_paths(now_npt)
+    summary_csv_path, price_csv_path = _daily_market_paths(partition_date)
 
     summary_count = append_rows_to_csv(
         summary_csv_path,
@@ -324,4 +377,5 @@ def scrape_market_to_csv(client: NepseDataClient | None = None) -> dict[str, Any
         "summary_rows_written": summary_count,
         "price_rows_written": price_count,
         "price_source": price_source,
+        "partition_date": partition_date.isoformat(),
     }

@@ -37,6 +37,10 @@ def _to_float(value: str) -> float | None:
         return None
 
 
+def _cell_text(cells: list[Any], name: str) -> str:
+    return cells[COL_INDEX[name]].get_text(strip=True)
+
+
 def parse_sharesansar_live_table(html: str) -> list[dict[str, Any]]:
     soup = BeautifulSoup(html, "html.parser")
     table = soup.find("table", {"id": "headFixed"}) or soup.find("table", {"class": "dataTable"})
@@ -52,20 +56,17 @@ def parse_sharesansar_live_table(html: str) -> list[dict[str, Any]]:
         if len(cols) <= max(COL_INDEX.values()):
             continue
 
-        def text_at(columns: list[Any], name: str) -> str:
-            return columns[COL_INDEX[name]].get_text(strip=True)
-
         result.append(
             {
-                "symbol": text_at(cols, "symbol"),
-                "lastTradedPrice": _to_float(text_at(cols, "last_price")),
-                "pointChange": _to_float(text_at(cols, "point_change")),
-                "percentageChange": _to_float(text_at(cols, "pct_change").replace("%", "")),
-                "openPrice": _to_float(text_at(cols, "open_price")),
-                "highPrice": _to_float(text_at(cols, "high_price")),
-                "lowPrice": _to_float(text_at(cols, "low_price")),
-                "totalTradedQuantity": _to_float(text_at(cols, "quantity")),
-                "previousDayClosePrice": _to_float(text_at(cols, "previous_close")),
+                "symbol": _cell_text(cols, "symbol"),
+                "lastTradedPrice": _to_float(_cell_text(cols, "last_price")),
+                "pointChange": _to_float(_cell_text(cols, "point_change")),
+                "percentageChange": _to_float(_cell_text(cols, "pct_change").replace("%", "")),
+                "openPrice": _to_float(_cell_text(cols, "open_price")),
+                "highPrice": _to_float(_cell_text(cols, "high_price")),
+                "lowPrice": _to_float(_cell_text(cols, "low_price")),
+                "totalTradedQuantity": _to_float(_cell_text(cols, "quantity")),
+                "previousDayClosePrice": _to_float(_cell_text(cols, "previous_close")),
             }
         )
 
