@@ -78,7 +78,7 @@ jobs:
 
       - name: Create daily PR if missing
         if: env.HAS_CHANGES == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const head = `${context.repo.owner}:${process.env.BRANCH_NAME}`;
