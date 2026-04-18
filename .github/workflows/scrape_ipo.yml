@@ -3,7 +3,7 @@ name: Scrape IPO Feed JSON
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 4 * * *"
+    - cron: "0 */6 * * *"
 
 concurrency:
   group: scrape-ipo
@@ -41,16 +41,31 @@ jobs:
         run: python -m scraper.cli ipo
 
       - name: Commit and push data
+        id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           if git diff --quiet data/ipo/ipo_feed.json; then
             echo "Nothing new to commit"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           git add data/ipo/ipo_feed.json
           git commit -m "Update IPO data ($(TZ=Asia/Kathmandu date +'%Y-%m-%d %H:%M NPT'))"
-
           git push origin "$(git branch --show-current)"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger IPO Alert checker
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.ALERT_DISPATCH_TOKEN }}
+        run: |
+          curl -s -X POST \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/prabinbessie/ipo-alert/dispatches \
+            -d '{"event_type":"ipo-data-updated"}' \
+          && echo "Alert workflow triggered" \
+          || echo "Alert trigger skipped (token may not be set)"
