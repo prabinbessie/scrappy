@@ -1,19 +1,43 @@
 {
   "meta": {
-    "generated_at_utc": "2026-04-19T12:42:21+00:00",
+    "generated_at_utc": "2026-04-19T18:36:38+00:00",
     "sources": {
-      "merolagani_upcoming": 0,
+      "merolagani_upcoming": 1,
       "nepselink_ipo_opening": 10,
-      "merolagani_results": 0,
+      "merolagani_results": 2,
       "nepse_disclosures": 0
     },
-    "upcoming_count": 0,
+    "upcoming_count": 1,
     "open_count": 1,
     "closed_count": 9,
-    "result_count": 0,
+    "result_count": 2,
     "unknown_count": 0
   },
-  "upcoming": [],
+  "upcoming": [
+    {
+      "record_type": "issue",
+      "nature": "issue",
+      "issue_status": "upcoming",
+      "issue_type": "ipo",
+      "company_name": "Everest Colour Limited",
+      "title": "Everest Colour Limited is going to issue its 79,000.00 units of IPO shares to the Nepalese citizens working abroad starting from 16th - 22nd Baishakh, 2083",
+      "details": "Everest Colour Limited is going to issue its 79,000.00 units of IPO shares to the Nepalese citizens working abroad starting from 16th - 22nd Baishakh, 2083",
+      "reserved_for": [
+        "foreign_employment"
+      ],
+      "issue_open_date": "2083-01-16",
+      "issue_close_date": "2083-01-22",
+      "min_quantity": null,
+      "max_quantity": null,
+      "total_quantity": 79000.0,
+      "price_per_unit": null,
+      "announcement_date": "Apr 19, 2026",
+      "source": "merolagani_upcoming",
+      "url": "https://merolagani.com/AnnouncementDetail.aspx?id=65181",
+      "scraped_at_utc": "2026-04-19T18:36:38+00:00",
+      "raw_text": "Everest Colour Limited is going to issue its 79,000.00 units of IPO shares to the Nepalese citizens working abroad starting from 16th - 22nd Baishakh, 2083 Everest Colour Limited is going to issue its 79,000.00 units of IPO shares to the Nepalese citizens working abroad starting from 16th - 22nd Baishakh, 2083"
+    }
+  ],
   "open": [
     {
       "record_type": "issue",
@@ -33,7 +57,7 @@
       "announcement_date": "2083-01-03",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-19T12:42:21+00:00",
+      "scraped_at_utc": "2026-04-19T18:36:38+00:00",
       "raw_text": "Sopan Pharmaceuticals Limited IPO-General IPO-General Sopan Pharmaceuticals Limited units 3474900 price per unit 100 minimum apply 10 open 2083-01-03 close 2083-01-08 status Open"
     }
   ],
@@ -56,7 +80,7 @@
       "announcement_date": "2083-01-02",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-19T12:42:21+00:00",
+      "scraped_at_utc": "2026-04-19T18:36:38+00:00",
       "raw_text": "Appolo Hydropower Limited IPO-GENERAL IPO-GENERAL Appolo Hydropower Limited units 780200 price per unit 100 minimum apply 10 open 2082-12-26 close 2083-01-02 status Closed"
     },
     {
@@ -77,7 +101,7 @@
       "announcement_date": "2082-12-25",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-19T12:42:21+00:00",
+      "scraped_at_utc": "2026-04-19T18:36:38+00:00",
       "raw_text": "Kalinchowk Hydropower Limited IPO-General IPO-General Kalinchowk Hydropower Limited units 684750 price per unit 100 minimum apply 10 open 2082-12-22 close 2082-12-25 status Closed"
     },
     {
@@ -98,7 +122,7 @@
       "announcement_date": "2082-11-22",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-19T12:42:21+00:00",
+      "scraped_at_utc": "2026-04-19T18:36:38+00:00",
       "raw_text": "Shikhar Power Development Limited IPO-GENERAL IPO-GENERAL Shikhar Power Development Limited units 1842600 price per unit 100 minimum apply 10 open 2082-11-17 close 2082-11-22 status Closed"
     },
     {
@@ -119,7 +143,7 @@
       "announcement_date": "2082-11-15",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-19T12:42:21+00:00",
+      "scraped_at_utc": "2026-04-19T18:36:38+00:00",
       "raw_text": "Palpa Cement Limited IPO-General IPO-General Palpa Cement Limited units 4500000 price per unit 100 minimum apply 10 open 2082-11-12 close 2082-11-15 status Closed"
     },
     {
@@ -140,7 +164,7 @@
       "announcement_date": "2082-11-10",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-19T12:42:21+00:00",
+      "scraped_at_utc": "2026-04-19T18:36:38+00:00",
       "raw_text": "Super Khudi Hydropower Limited IPO-General IPO-General Super Khudi Hydropower Limited units 1286500 price per unit 100 minimum apply 10 open 2082-11-05 close 2082-11-10 status Closed"
     },
     {
@@ -161,7 +185,7 @@
       "announcement_date": "2082-11-04",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-19T12:42:21+00:00",
+      "scraped_at_utc": "2026-04-19T18:36:38+00:00",
       "raw_text": "Ridge Line Energy Limited IPO-GENERAL IPO-GENERAL Ridge Line Energy Limited units 1180260 price per unit 100 minimum apply 10 open 2082-10-28 close 2082-11-04 status Closed"
     },
     {
@@ -182,7 +206,7 @@
       "announcement_date": "2082-10-26",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-19T12:42:21+00:00",
+      "scraped_at_utc": "2026-04-19T18:36:38+00:00",
       "raw_text": "Hotel Forest Inn Limited IPO-General IPO-General Hotel Forest Inn Limited units 3320000 price per unit 100 minimum apply 10 open 2082-10-22 close 2082-10-26 status Closed"
     },
     {
@@ -203,7 +227,7 @@
       "announcement_date": "2082-10-21",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-19T12:42:21+00:00",
+      "scraped_at_utc": "2026-04-19T18:36:38+00:00",
       "raw_text": "Suryakunda Hydro Electric Limited IPO-General IPO-General Suryakunda Hydro Electric Limited units 572431 price per unit 100 minimum apply 10 open 2082-10-18 close 2082-10-21 status Closed"
     },
     {
@@ -224,10 +248,57 @@
       "announcement_date": "2082-10-15",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-19T12:42:21+00:00",
+      "scraped_at_utc": "2026-04-19T18:36:38+00:00",
       "raw_text": "Bhujung Hydropower Limited IPO-General IPO-General Bhujung Hydropower Limited units 830000 price per unit 100 minimum apply 10 open 2082-10-12 close 2082-10-15 status Closed"
     }
   ],
-  "results": [],
+  "results": [
+    {
+      "record_type": "result",
+      "nature": "result",
+      "issue_status": "result",
+      "issue_type": "ipo",
+      "company_name": "Taksar Pikhuwa Khola Hydropower Limited",
+      "title": "Taksar Pikhuwa Khola Hydropower Limited has distributed its 12,00,000.00 units of IPO shares to the project affected local residents of Bhojpur District on Baishakh 04, 2083 and the refund process for non-allottee's begins from Baishakh 07, 2083",
+      "details": "Taksar Pikhuwa Khola Hydropower Limited has distributed its 12,00,000.00 units of IPO shares to the project affected local residents of Bhojpur District on Baishakh 04, 2083 and the refund process for non-allottee's begins from Baishakh 07, 2083",
+      "reserved_for": [
+        "local_residents"
+      ],
+      "issue_open_date": null,
+      "issue_close_date": null,
+      "min_quantity": null,
+      "max_quantity": null,
+      "total_quantity": 1200000.0,
+      "price_per_unit": null,
+      "announcement_date": "Apr 19, 2026",
+      "source": "merolagani_announcements",
+      "url": "https://merolagani.com/AnnouncementDetail.aspx?id=65180",
+      "scraped_at_utc": "2026-04-19T18:36:38+00:00",
+      "raw_text": "Taksar Pikhuwa Khola Hydropower Limited has distributed its 12,00,000.00 units of IPO shares to the project affected local residents of Bhojpur District on Baishakh 04, 2083 and the refund process for non-allottee's begins from Baishakh 07, 2083 Taksar Pikhuwa Khola Hydropower Limited has distributed its 12,00,000.00 units of IPO shares to the project affected local residents of Bhojpur District on Baishakh 04, 2083 and the refund process for non-allottee's begins from Baishakh 07, 2083"
+    },
+    {
+      "record_type": "result",
+      "nature": "result",
+      "issue_status": "result",
+      "issue_type": "ipo",
+      "company_name": "Taksar Pikhuwa Khola Hydropower Limited",
+      "title": "Taksar Pikhuwa Khola Hydropower Limited has distributed its 3,03,067.00 units of IPO shares to the Nepalese citizens working abroad on Baishakh 04, 2083 and has requested all the member of C-ASBA bank/financial Institutions to release the payment to the non-allottee's bank account.",
+      "details": "Taksar Pikhuwa Khola Hydropower Limited has distributed its 3,03,067.00 units of IPO shares to the Nepalese citizens working abroad on Baishakh 04, 2083 and has requested all the member of C-ASBA bank/financial Institutions to release the payment to the non-allottee's bank account.",
+      "reserved_for": [
+        "foreign_employment"
+      ],
+      "issue_open_date": null,
+      "issue_close_date": null,
+      "min_quantity": null,
+      "max_quantity": null,
+      "total_quantity": 303067.0,
+      "price_per_unit": null,
+      "announcement_date": "Apr 19, 2026",
+      "source": "merolagani_announcements",
+      "url": "https://merolagani.com/AnnouncementDetail.aspx?id=65179",
+      "scraped_at_utc": "2026-04-19T18:36:38+00:00",
+      "raw_text": "Taksar Pikhuwa Khola Hydropower Limited has distributed its 3,03,067.00 units of IPO shares to the Nepalese citizens working abroad on Baishakh 04, 2083 and has requested all the member of C-ASBA bank/financial Institutions to release the payment to the non-allottee's bank account. Taksar Pikhuwa Khola Hydropower Limited has distributed its 3,03,067.00 units of IPO shares to the Nepalese citizens working abroad on Baishakh 04, 2083 and has requested all the member of C-ASBA bank/financial Institutions to release the payment to the non-allottee's bank account."
+    }
+  ],
   "unknown": []
 }
