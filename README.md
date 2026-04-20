@@ -4,7 +4,8 @@
 
 # Scrappy
 
-Scrappy is a Python project that collects NEPSE market and IPO data in a clean, ML-friendly format for downstream analysis and automation.
+Scrappy is a Python project that collects NEPSE market and IPO data in a clean, ML-friendly format for downstream analysis and automation. 
+like -> https://ipo-alert-red.vercel.app/
 
 ## What it collects
 
