@@ -1,12 +1,51 @@
 from __future__ import annotations
 
 import re
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 from dateutil import parser as date_parser
 
 from scraper.ipo.common import normalize_issue_status
+
+_BS_YEAR_START: dict[int, date] = {
+    2082: date(2025, 4, 14),
+    2083: date(2026, 4, 13),
+    2084: date(2027, 4, 13),
+}
+
+_BS_MONTH_DAYS: dict[int, list[int]] = {
+    2082: [31, 31, 32, 32, 31, 30, 30, 30, 29, 30, 30, 30],
+    2083: [31, 31, 32, 32, 31, 30, 30, 29, 30, 29, 30, 30],
+    2084: [31, 32, 31, 32, 31, 30, 30, 29, 30, 29, 30, 30],
+}
+
+
+def _bs_to_ad(year: int, month: int, day: int) -> date | None:
+    year_start = _BS_YEAR_START.get(year)
+    if not year_start or not (1 <= month <= 12):
+        return None
+    month_days = _BS_MONTH_DAYS[year]
+    if not (1 <= day <= month_days[month - 1]):
+        return None
+    offset = day - 1
+    for m in range(1, month):
+        offset += month_days[m - 1]
+    return year_start + timedelta(days=offset)
+
+
+def _normalize_date_str(value: str) -> str:
+    """Normalise separators and zero-pad to YYYY-MM-DD."""
+    cleaned = value.strip().replace("/", "-").replace(".", "-")
+    parts = cleaned.split("-")
+    if len(parts) == 3:
+        try:
+            y, m, d = int(parts[0]), int(parts[1]), int(parts[2])
+            return f"{y:04d}-{m:02d}-{d:02d}"
+        except ValueError:
+            pass
+    return cleaned
+
 
 ISSUE_TYPES: list[tuple[str, str]] = [
     ("debenture", "debenture"),
@@ -102,8 +141,18 @@ def _safe_parse_ad_date(value: str) -> str | None:
     lowered = value.lower()
     if any(month in lowered for month in NEPALI_MONTH_TOKENS):
         return None
+    normalized = _normalize_date_str(value)
+    parts = normalized.split("-")
+    if len(parts) == 3:
+        try:
+            if int(parts[0]) >= 2070:
+                return None
+        except ValueError:
+            pass
     try:
         parsed = date_parser.parse(value, fuzzy=True, dayfirst=False)
+        if parsed.year >= 2070:
+            return None
         return parsed.date().isoformat()
     except (ValueError, TypeError, OverflowError):
         return None
@@ -149,14 +198,14 @@ def _extract_bs_date(value: str) -> str | None:
 def _to_date(value: str | None) -> date | None:
     if not value:
         return None
+    normalized = _normalize_date_str(value)
     try:
-        parsed = datetime.fromisoformat(value).date()
+        parsed = datetime.fromisoformat(normalized).date()
     except ValueError:
         return None
 
-    # Year values like 2082 are typically BS dates, not AD dates.
     if parsed.year >= 2070:
-        return None
+        return _bs_to_ad(parsed.year, parsed.month, parsed.day)
 
     return parsed
 
