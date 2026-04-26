@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated_at_utc": "2026-04-26T07:18:00+00:00",
+    "generated_at_utc": "2026-04-26T12:44:58+00:00",
     "sources": {
       "merolagani_upcoming": 6,
       "nepselink_ipo_opening": 10,
@@ -35,7 +35,7 @@
       "announcement_date": "Apr 22, 2026",
       "source": "merolagani_upcoming",
       "url": "https://merolagani.com/AnnouncementDetail.aspx?id=65250",
-      "scraped_at_utc": "2026-04-26T07:18:00+00:00",
+      "scraped_at_utc": "2026-04-26T12:44:58+00:00",
       "raw_text": "Sarvottam Paints Industries Limited is going to issue its 85,000.00 units of IPO shares to the Nepalese citizens working abroad starting from 21st - 24th Baishakh, 2083 Sarvottam Paints Industries Limited is going to issue its 85,000.00 units of IPO shares to the Nepalese citizens working abroad starting from 21st - 24th Baishakh, 2083"
     },
     {
@@ -58,7 +58,7 @@
       "announcement_date": "Apr 21, 2026",
       "source": "merolagani_upcoming",
       "url": "https://merolagani.com/AnnouncementDetail.aspx?id=65247",
-      "scraped_at_utc": "2026-04-26T07:18:00+00:00",
+      "scraped_at_utc": "2026-04-26T12:44:58+00:00",
       "raw_text": "Mount Everest Power Development Limited is going to issue its 1,72,000.00 units of IPO shares to the Nepalese citizens working abroad starting from 17th - 23rd Baishakh, 2083 Mount Everest Power Development Limited is going to issue its 1,72,000.00 units of IPO shares to the Nepalese citizens working abroad starting from 17th - 23rd Baishakh, 2083"
     },
     {
@@ -81,7 +81,7 @@
       "announcement_date": "Apr 21, 2026",
       "source": "merolagani_upcoming",
       "url": "https://merolagani.com/AnnouncementDetail.aspx?id=65248",
-      "scraped_at_utc": "2026-04-26T07:18:00+00:00",
+      "scraped_at_utc": "2026-04-26T12:44:58+00:00",
       "raw_text": "Mount Everest Power Development Limited is going to issue its 8,60,000.00 units of IPO shares to the project affected local residents of Solukhumbu District, Solu Dudhkunda Municipality Ward No. 01 & 02 and other Wards of affected areas starting from 17th - 31st Baishakh, 2083 Mount Everest Power Development Limited is going to issue its 8,60,000.00 units of IPO shares to the project affected local residents of Solukhumbu District, Solu Dudhkunda Municipality Ward No. 01 & 02 and other Wards of affected areas starting from 17th - 31st Baishakh, 2083"
     },
     {
@@ -104,7 +104,7 @@
       "announcement_date": "Apr 19, 2026",
       "source": "merolagani_upcoming",
       "url": "https://merolagani.com/AnnouncementDetail.aspx?id=65181",
-      "scraped_at_utc": "2026-04-26T07:18:00+00:00",
+      "scraped_at_utc": "2026-04-26T12:44:58+00:00",
       "raw_text": "Everest Colour Limited is going to issue its 79,000.00 units of IPO shares to the Nepalese citizens working abroad starting from 16th - 22nd Baishakh, 2083 Everest Colour Limited is going to issue its 79,000.00 units of IPO shares to the Nepalese citizens working abroad starting from 16th - 22nd Baishakh, 2083"
     },
     {
@@ -125,7 +125,7 @@
       "announcement_date": "2083-01-23",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-26T07:18:00+00:00",
+      "scraped_at_utc": "2026-04-26T12:44:58+00:00",
       "raw_text": "Taksar Pikhuwa Khola Hydropower Limited IPO-General IPO-General Taksar Pikhuwa Khola Hydropower Limited units 2515455 price per unit 100 minimum apply 10 open 2083-01-23 close 2083-01-28 status Coming Soon"
     },
     {
@@ -146,7 +146,7 @@
       "announcement_date": "2083-01-16",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-26T07:18:00+00:00",
+      "scraped_at_utc": "2026-04-26T12:44:58+00:00",
       "raw_text": "Yambaling Hydropower Limited IPO-General IPO-General Yambaling Hydropower Limited units 1743000 price per unit 100 minimum apply 10 open 2083-01-16 close 2083-01-22 status Coming Soon"
     }
   ],
@@ -170,7 +170,7 @@
       "announcement_date": "2083-01-08",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-26T07:18:00+00:00",
+      "scraped_at_utc": "2026-04-26T12:44:58+00:00",
       "raw_text": "Sopan Pharmaceuticals Limited IPO-General IPO-General Sopan Pharmaceuticals Limited units 3474900 price per unit 100 minimum apply 10 open 2083-01-03 close 2083-01-08 status Closed"
     },
     {
@@ -191,7 +191,7 @@
       "announcement_date": "2083-01-02",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-26T07:18:00+00:00",
+      "scraped_at_utc": "2026-04-26T12:44:58+00:00",
       "raw_text": "Appolo Hydropower Limited IPO-GENERAL IPO-GENERAL Appolo Hydropower Limited units 780200 price per unit 100 minimum apply 10 open 2082-12-26 close 2083-01-02 status Closed"
     },
     {
@@ -212,7 +212,7 @@
       "announcement_date": "2082-12-25",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-26T07:18:00+00:00",
+      "scraped_at_utc": "2026-04-26T12:44:58+00:00",
       "raw_text": "Kalinchowk Hydropower Limited IPO-General IPO-General Kalinchowk Hydropower Limited units 684750 price per unit 100 minimum apply 10 open 2082-12-22 close 2082-12-25 status Closed"
     },
     {
@@ -233,7 +233,7 @@
       "announcement_date": "2082-11-22",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-26T07:18:00+00:00",
+      "scraped_at_utc": "2026-04-26T12:44:58+00:00",
       "raw_text": "Shikhar Power Development Limited IPO-GENERAL IPO-GENERAL Shikhar Power Development Limited units 1842600 price per unit 100 minimum apply 10 open 2082-11-17 close 2082-11-22 status Closed"
     },
     {
@@ -254,7 +254,7 @@
       "announcement_date": "2082-11-15",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-26T07:18:00+00:00",
+      "scraped_at_utc": "2026-04-26T12:44:58+00:00",
       "raw_text": "Palpa Cement Limited IPO-General IPO-General Palpa Cement Limited units 4500000 price per unit 100 minimum apply 10 open 2082-11-12 close 2082-11-15 status Closed"
     },
     {
@@ -275,7 +275,7 @@
       "announcement_date": "2082-11-10",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-26T07:18:00+00:00",
+      "scraped_at_utc": "2026-04-26T12:44:58+00:00",
       "raw_text": "Super Khudi Hydropower Limited IPO-General IPO-General Super Khudi Hydropower Limited units 1286500 price per unit 100 minimum apply 10 open 2082-11-05 close 2082-11-10 status Closed"
     },
     {
@@ -296,7 +296,7 @@
       "announcement_date": "2082-11-04",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-26T07:18:00+00:00",
+      "scraped_at_utc": "2026-04-26T12:44:58+00:00",
       "raw_text": "Ridge Line Energy Limited IPO-GENERAL IPO-GENERAL Ridge Line Energy Limited units 1180260 price per unit 100 minimum apply 10 open 2082-10-28 close 2082-11-04 status Closed"
     },
     {
@@ -317,7 +317,7 @@
       "announcement_date": "2082-10-26",
       "source": "nepselink_ipo_opening",
       "url": "https://nepselink.com/ipo-opening",
-      "scraped_at_utc": "2026-04-26T07:18:00+00:00",
+      "scraped_at_utc": "2026-04-26T12:44:58+00:00",
       "raw_text": "Hotel Forest Inn Limited IPO-General IPO-General Hotel Forest Inn Limited units 3320000 price per unit 100 minimum apply 10 open 2082-10-22 close 2082-10-26 status Closed"
     }
   ],
@@ -342,7 +342,7 @@
       "announcement_date": "Apr 26, 2026",
       "source": "merolagani_announcements",
       "url": "https://merolagani.com/AnnouncementDetail.aspx?id=65287",
-      "scraped_at_utc": "2026-04-26T07:18:00+00:00",
+      "scraped_at_utc": "2026-04-26T12:44:58+00:00",
       "raw_text": "Appolo Hydropower Limited has distributed its 7,80,200.00 units of IPO shares to the general public on Baishakh 11, 2083 and has requested all the member of C-ASBA bank/financial Institutions to release the payment to the non-allottee's bank account. Appolo Hydropower Limited has distributed its 7,80,200.00 units of IPO shares to the general public on Baishakh 11, 2083 and has requested all the member of C-ASBA bank/financial Institutions to release the payment to the non-allottee's bank account."
     }
   ],
