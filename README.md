@@ -14,7 +14,7 @@ like -> https://ipo-alert-red.vercel.app/
 	- `data/nepse/YYYY/MM/today_price_YYYY-MM-DD.csv`
 - IPO feed to JSON:
 	- `data/ipo/ipo_feed.json`
-### API
+### data
 
 https://raw.githubusercontent.com/prabinbessie/scrappy/dev/data/ipo/ipo_feed.json
 
