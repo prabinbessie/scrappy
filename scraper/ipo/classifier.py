@@ -20,6 +20,19 @@ _BS_MONTH_DAYS: dict[int, list[int]] = {
     2084: [31, 32, 31, 32, 31, 30, 30, 29, 30, 29, 30, 30],
 }
 
+_UNKNOWN_DATE_TOKENS: frozenset[str] = frozenset(
+    {
+        "tbd",
+        "n/a",
+        "na",
+        "unknown",
+        "-",
+        "--",
+    }
+)
+
+_NUMERIC_DATE_PATTERN = re.compile(r"^(\d{4})-(\d{1,2})-(\d{1,2})$")
+
 
 def _bs_to_ad(year: int, month: int, day: int) -> date | None:
     year_start = _BS_YEAR_START.get(year)
@@ -195,6 +208,45 @@ def _extract_bs_date(value: str) -> str | None:
     return _parse_bs_date(match.group(1), match.group(2), match.group(3))
 
 
+def _normalize_issue_date(value: Any) -> str | None:
+    raw = normalize_text(str(value or ""))
+    if not raw:
+        return None
+
+    if raw.lower() in _UNKNOWN_DATE_TOKENS:
+        return None
+
+    normalized = _normalize_date_str(raw)
+    numeric_match = _NUMERIC_DATE_PATTERN.match(normalized)
+    if numeric_match:
+        year = int(numeric_match.group(1))
+        month = int(numeric_match.group(2))
+        day = int(numeric_match.group(3))
+
+        if year >= 2070:
+            if _bs_to_ad(year, month, day) is None:
+                return None
+        else:
+            try:
+                datetime(year, month, day)
+            except ValueError:
+                return None
+
+        return f"{year:04d}-{month:02d}-{day:02d}"
+
+    return _safe_parse_ad_date(raw) or _extract_bs_date(raw)
+
+
+def _is_bs_date(value: str | None) -> bool:
+    if not value:
+        return False
+    normalized = _normalize_date_str(value)
+    numeric_match = _NUMERIC_DATE_PATTERN.match(normalized)
+    if not numeric_match:
+        return False
+    return int(numeric_match.group(1)) >= 2070
+
+
 def _to_date(value: str | None) -> date | None:
     if not value:
         return None
@@ -246,8 +298,8 @@ def extract_issue_dates(text: str) -> tuple[str | None, str | None]:
     if range_match:
         start_raw = range_match.group(1)
         end_raw = range_match.group(2)
-        start_date = _safe_parse_ad_date(start_raw) or _extract_bs_date(start_raw)
-        end_date = _safe_parse_ad_date(end_raw) or _extract_bs_date(end_raw)
+        start_date = _normalize_issue_date(start_raw)
+        end_date = _normalize_issue_date(end_raw)
         return start_date, end_date
 
     starts_match = re.search(
@@ -257,7 +309,7 @@ def extract_issue_dates(text: str) -> tuple[str | None, str | None]:
     )
     if starts_match:
         start_raw = starts_match.group(1)
-        return _safe_parse_ad_date(start_raw) or _extract_bs_date(start_raw), None
+        return _normalize_issue_date(start_raw), None
 
     return None, None
 
@@ -388,12 +440,21 @@ def classify_ipo_entry(entry: dict[str, Any], record_type: str) -> dict[str, Any
     )
     nature = detect_record_nature(full_text)
     reserved_for = detect_reserved_for(full_text)
-    open_date, close_date = extract_issue_dates(full_text)
-    open_date = str(entry.get("issue_open_date") or open_date or "") or None
-    close_date = str(entry.get("issue_close_date") or close_date or "") or None
+    extracted_open_date, extracted_close_date = extract_issue_dates(full_text)
+    open_date = _normalize_issue_date(entry.get("issue_open_date")) or extracted_open_date
+    close_date = _normalize_issue_date(entry.get("issue_close_date")) or extracted_close_date
 
     explicit_status = normalize_issue_status(entry.get("issue_status"), default="")
-    issue_status = explicit_status or derive_issue_status(open_date, close_date, nature, full_text)
+    derived_status = derive_issue_status(open_date, close_date, nature, full_text)
+    issue_status = explicit_status or derived_status
+    if (
+        nature != "result"
+        and explicit_status == "upcoming"
+        and derived_status in {"open", "closed"}
+        and (_is_bs_date(open_date) or _is_bs_date(close_date))
+    ):
+        issue_status = derived_status
+
     min_quantity, max_quantity, total_quantity, price_per_unit = extract_quantities_and_price(
         full_text
     )

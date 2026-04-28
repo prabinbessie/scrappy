@@ -72,3 +72,50 @@ def test_classify_ipo_result_entry_extracts_clean_company_name() -> None:
     classified = classify_ipo_entry(entry, "result")
 
     assert classified["company_name"] == "Sopan Pharmaceuticals Limited"
+
+
+def test_classify_ipo_entry_normalizes_numeric_bs_dates() -> None:
+    entry = {
+        "title": "Taksar Pikhuwa Khola Hydropower Limited IPO opens from 2083/01/23 to 2083/01/28",
+        "details": "IPO-General issue",  # date is intentionally only in title
+        "announcement_date": "2026-04-20",
+        "url": "https://example.com/taksar",
+        "source": "test_source",
+    }
+
+    classified = classify_ipo_entry(entry, "issue")
+
+    assert classified["issue_open_date"] == "2083-01-23"
+    assert classified["issue_close_date"] == "2083-01-28"
+
+
+def test_classify_ipo_entry_placeholder_date_uses_extracted_range() -> None:
+    entry = {
+        "title": "Sarvottam Paints Industries Limited is going to issue its IPO starting from 21st - 24th Baishakh, 2083",
+        "details": "Placeholder date from source should not override extracted range",
+        "issue_open_date": "TBD",
+        "issue_close_date": "N/A",
+        "url": "https://example.com/sarvottam",
+        "source": "test_source",
+    }
+
+    classified = classify_ipo_entry(entry, "issue")
+
+    assert classified["issue_open_date"] == "2083-01-21"
+    assert classified["issue_close_date"] == "2083-01-24"
+
+
+def test_classify_ipo_entry_stale_upcoming_status_gets_corrected() -> None:
+    entry = {
+        "title": "Legacy IPO row",
+        "details": "Application window is already over",
+        "issue_open_date": "2083-01-03",
+        "issue_close_date": "2083-01-08",
+        "issue_status": "Coming Soon",
+        "url": "https://example.com/legacy",
+        "source": "test_source",
+    }
+
+    classified = classify_ipo_entry(entry, "issue")
+
+    assert classified["issue_status"] == "closed"
